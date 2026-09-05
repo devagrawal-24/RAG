@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antigravity Paper Studio — The Antigravity of Research Papers</title>
+  <meta name="description" content="Next-generation literature synthesis, structural outline induction, and draft auditor copilot grounded in scientific corpora.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="light-theme">
+  <!-- Top App Navigation -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-group">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2a10 10 0 0 0-7.07 17.07"></path>
+            <path d="M12 22a10 10 0 0 0 7.07-17.07"></path>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="brand-title">Antigravity<span class="accent-text">Paper</span></span>
+          <span class="brand-badge">Research Studio</span>
+        </div>
+      </div>
+
+      <div id="projectHeaderBreadcrumb" class="project-breadcrumb hidden">
+        <span class="crumb-separator">/</span>
+        <span id="headerProjectName" class="crumb-project-name">Project Name</span>
+        <span id="headerProjectStatus" class="badge badge-active">Active</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div id="workspaceActions" class="header-actions hidden">
+        <button id="btnExportProject" class="btn btn-secondary btn-sm" title="Export Survey Starter Kit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export Dossier
+        </button>
+      </div>
+
+      <button id="btnOpenSettings" class="btn btn-icon" title="AI Model & API Key Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+
+      <button id="btnBackToDashboard" class="btn btn-outline btn-sm hidden">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        All Projects
+      </button>
+    </div>
+  </header>
+
+  <!-- Main App Shell -->
+  <main class="app-main">
+    
+    <!-- VIEW 1: DASHBOARD -->
+    <section id="viewDashboard" class="view active-view">
+      <div class="dashboard-hero">
+        <div class="hero-content">
+          <h1>The <span class="accent-text">Antigravity</span> of Research Papers</h1>
+          <p>Ground your taxonomy, induce cohesive outlines, synthesize multi-document literature, and audit your drafts with verified page-level provenance.</p>
+          <div class="hero-cta">
+            <button id="btnNewProjectModal" class="btn btn-primary btn-lg">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Create New Survey Project
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-container">
+        <div class="section-title-row">
+          <h2>Your Research Projects</h2>
+          <span id="projectCountBadge" class="badge badge-secondary">0 Projects</span>
+        </div>
+
+        <div id="projectListGrid" class="project-grid">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div id="dashboardEmptyState" class="empty-state hidden">
+          <div class="empty-state-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          </div>
+          <h3>No survey projects yet</h3>
+          <p>Start by creating a project for your literature review topic. You can then upload up to 30 scientific PDFs to automatically generate structured outlines and reviews.</p>
+          <button id="btnEmptyCreate" class="btn btn-primary">Create Your First Project</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: PROJECT WORKSPACE -->
+    <section id="viewWorkspace" class="view hidden">
+      <!-- Workspace Navigation Bar -->
+      <nav class="workspace-tabs-nav">
+        <div class="tabs-list">
+          <button class="tab-btn active" data-tab="tabDraftEditor">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            Draft Studio
+            <span class="tab-badge" style="background:rgba(79, 70, 229, 0.12); color:#4338ca;">IDE</span>
+          </button>
+          <button class="tab-btn" data-tab="tabPapers">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Literature Papers
+            <span id="tabPapersCount" class="tab-badge">0</span>
+          </button>
+          <button class="tab-btn" data-tab="tabOutline">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Grounded Outline
+          </button>
+          <button class="tab-btn" data-tab="tabSummaries">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            Summaries & Synthesis
+          </button>
+          <button class="tab-btn" data-tab="tabReview">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            Review & Auditor
+          </button>
+          <button class="tab-btn" data-tab="tabChat">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            AI Co-Pilot (Full)
+          </button>
+        </div>
+      </nav>
+
+      <div class="workspace-content-container">
+        
+        <!-- TAB 0: DRAFT STUDIO IDE (TEXT EDITOR + LIVE CHAT + TERMINAL) -->
+        <div id="tabDraftEditor" class="tab-pane active">
+          <div class="draft-studio-container">
+            <!-- Studio Command Bar -->
+            <div class="studio-toolbar">
+              <div class="studio-toolbar-left">
+                <div class="draft-title-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                  <input type="text" id="draftDocTitle" value="Survey Paper Draft" placeholder="Document Title" class="draft-title-input" />
+                </div>
+                <span id="draftSaveIndicator" class="draft-save-pill"><span class="pulse-dot"></span> Saved</span>
+                <span id="draftWordCountBadge" class="draft-stat-chip">0 words</span>
+                <span id="draftCharCountBadge" class="draft-stat-chip">0 chars</span>
+              </div>
+
+              <div class="studio-toolbar-right">
+                <button id="btnInsertOutlineSkeleton" class="btn btn-outline btn-sm" title="Insert sections from Grounded Outline into the editor">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
+                  Insert Outline
+                </button>
+                <button id="btnToggleTerminal" class="btn btn-outline btn-sm" title="Toggle Terminal Output">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                  Terminal
+                </button>
+                <button id="btnCompileDraftReview" class="btn btn-compile btn-sm" title="Compile and Audit Draft for Pedagogical Review (Ctrl+Enter)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span>Audit & Compile Draft</span>
+                  <kbd class="kbd-badge">Ctrl+Enter</kbd>
+                </button>
+              </div>
+            </div>
+
+            <!-- Main Split Workspace: Left Editor + Right Live Co-Pilot -->
+            <div class="studio-split-body">
+              <!-- Left: Editor Pane -->
+              <div class="editor-pane">
+                <div class="editor-gutter" id="editorLineNumbers"><div>1</div></div>
+                <textarea id="draftEditorTextarea" class="editor-textarea" spellcheck="false" placeholder="# Survey Title&#10;&#10;Draft your survey paper here. Use Markdown for sections and citations..."></textarea>
+              </div>
+
+              <!-- Right: Live AI Co-Pilot Docked Chat -->
+              <div class="docked-chat-pane">
+                <div class="docked-chat-header">
+                  <div class="docked-chat-title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2a10 10 0 0 0-7.07 17.07"></path><path d="M12 22a10 10 0 0 0 7.07-17.07"></path></svg>
+                    <strong>Live AI Research Co-Pilot</strong>
+                  </div>
+                  <span class="badge badge-active" style="font-size:10px;">Grounded</span>
+                </div>
+
+                <div class="docked-quick-chips">
+                  <span class="docked-chip" data-prompt="Synthesize the primary methodology comparison for my current section.">Synthesize methods</span>
+                  <span class="docked-chip" data-prompt="Find literature citations to support a claim on retrieval accuracy.">Find citations</span>
+                  <span class="docked-chip" data-prompt="Suggest a transition between background and technical taxonomy.">Transition help</span>
+                </div>
+
+                <div id="dockedChatMessages" class="docked-chat-messages">
+                  <div class="chat-message assistant-message">
+                    <div class="message-avatar">✦</div>
+                    <div class="message-content">
+                      <p>Welcome! I'm your docked co-pilot. As you draft on the left, ask me for literature citations, taxonomy tables, or methodological trade-offs.</p>
+                      <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Press <strong>"Audit & Compile Draft"</strong> anytime to compile diagnostics into the terminal below.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <form id="dockedChatForm" class="docked-chat-form">
+                  <input type="text" id="dockedChatInput" placeholder="Ask live co-pilot for citations..." />
+                  <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Bottom VS Code Terminal Drawer -->
+            <div id="studioTerminalDrawer" class="studio-terminal-drawer">
+              <div class="terminal-drawer-header">
+                <div class="terminal-tabs">
+                  <button class="terminal-tab-btn active" data-term-tab="termProblems">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    PROBLEMS <span id="termProblemsCount" class="terminal-count-badge">0</span>
+                  </button>
+                  <button class="terminal-tab-btn" data-term-tab="termMetrics">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    METRICS & HEALTH
+                  </button>
+                  <button class="terminal-tab-btn" data-term-tab="termConsole">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                    TERMINAL OUTPUT
+                  </button>
+                </div>
+
+                <div class="terminal-header-actions">
+                  <span id="termHealthScoreBadge" class="term-health-pill">Health: --/100</span>
+                  <button id="btnMinimizeTerminal" class="terminal-action-btn" title="Minimize Terminal">✕</button>
+                </div>
+              </div>
+
+              <div class="terminal-drawer-body">
+                <!-- Tab 1: Problems -->
+                <div id="termProblems" class="term-tab-pane active">
+                  <div id="termProblemsList" class="term-problems-list">
+                    <div class="term-empty-message">No diagnostics compiled yet. Click <strong>"Audit & Compile Draft"</strong> or press <strong>Ctrl+Enter</strong> to analyze your draft.</div>
+                  </div>
+                </div>
+
+                <!-- Tab 2: Metrics -->
+                <div id="termMetrics" class="term-tab-pane">
+                  <div class="term-metrics-grid">
+                    <div class="term-metric-item">
+                      <span class="label">Draft Health Score</span>
+                      <strong id="termMetricHealth" class="val">--/100</strong>
+                    </div>
+                    <div class="term-metric-item">
+                      <span class="label">Flesch Reading Ease</span>
+                      <strong id="termMetricFRE" class="val">--</strong>
+                    </div>
+                    <div class="term-metric-item">
+                      <span class="label">Gunning Fog Grade</span>
+                      <strong id="termMetricFog" class="val">--</strong>
+                    </div>
+                    <div class="term-metric-item">
+                      <span class="label">Literature Overlap</span>
+                      <strong id="termMetricOverlap" class="val">--%</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab 3: Console Logs -->
+                <div id="termConsole" class="term-tab-pane">
+                  <div id="termConsoleOutput" class="term-console-log">
+                    <div class="console-line log-info">[Antigravity Paper Studio Console Ready]</div>
+                    <div class="console-line log-dim">Press 'Audit & Compile Draft' to run structural, citation, readability, and overlap diagnostics.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 1: PAPERS & UPLOAD -->
+        <div id="tabPapers" class="tab-pane">
+          <div class="pane-header-row">
+            <div>
+              <h2>Ingested Scientific Papers</h2>
+              <p class="text-muted">Upload and inspect PDFs from IEEE, ACM, arXiv. Text and structure are extracted with layout-aware boundary parsing.</p>
+            </div>
+          </div>
+
+          <!-- Drag and Drop Upload Area -->
+          <div id="paperDropZone" class="drop-zone">
+            <div class="drop-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <h3>Drag & Drop research PDFs here, or <span class="browse-link">browse files</span></h3>
+            <p class="drop-help-text">Supports multiple PDFs. Auto-detects titles, authors, abstracts, sections, and duplicate uploads.</p>
+            <input type="file" id="paperFileInput" multiple accept=".pdf" class="file-input-hidden">
+          </div>
+
+          <!-- Upload Queue Progress Indicator -->
+          <div id="uploadQueueContainer" class="upload-queue-container hidden">
+            <h4>Processing Papers</h4>
+            <div id="uploadQueueList" class="upload-queue-list"></div>
+          </div>
+
+          <!-- Papers List Table / Grid -->
+          <div class="papers-list-section">
+            <div class="table-card">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Paper Title & Authors</th>
+                    <th>Pages</th>
+                    <th>Status</th>
+                    <th>Extracted Sections</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="papersTableBody">
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+              <div id="noPapersNotice" class="table-empty-notice">
+                <p>No papers uploaded yet. Drag and drop your PDFs above to get started.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: GROUNDED OUTLINE -->
+        <div id="tabOutline" class="tab-pane">
+          <div class="pane-header-row">
+            <div>
+              <h2>Grounded Survey Paper Outline</h2>
+              <p class="text-muted">Induces thematic taxonomy clusters, comparative matrices, and open challenge structures grounded in your uploaded papers.</p>
+            </div>
+            <div class="pane-actions">
+              <button id="btnRegenOutlineModal" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                Regenerate with Guidance
+              </button>
+              <button id="btnAddSectionBtn" class="btn btn-outline">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Section
+              </button>
+              <button id="btnSaveOutline" class="btn btn-primary">
+                Save Outline
+              </button>
+            </div>
+          </div>
+
+          <div id="outlineNoticeContainer"></div>
+
+          <div class="outline-tree-container">
+            <div id="outlineSectionsList" class="outline-sections-list">
+              <!-- Outline sections injected dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: SUMMARIES & SYNTHESIS -->
+        <div id="tabSummaries" class="tab-pane">
+          <div class="pane-header-row">
+            <div>
+              <h2>Multi-Document Summaries & Synthesis</h2>
+              <p class="text-muted">Individual structured 4-pillar paper breakdowns (Problem, Method, Findings, Limitations) and cross-paper comparative synthesis.</p>
+            </div>
+            <div class="pane-actions">
+              <button id="btnGenerateSummaries" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                Generate / Refresh Summaries
+              </button>
+            </div>
+          </div>
+
+          <!-- Synthesis Sub-tabs -->
+          <div class="sub-tabs-container">
+            <button class="sub-tab-btn active" data-subtab="subtabCombined">
+              Cross-Paper Literature Synthesis
+            </button>
+            <button class="sub-tab-btn" data-subtab="subtabIndividual">
+              Individual Paper Decompositions
+            </button>
+          </div>
+
+          <div id="subtabCombined" class="subtab-pane active">
+            <div class="synthesis-card">
+              <div id="combinedSummaryContent" class="markdown-body">
+                <div class="empty-card-placeholder">
+                  <p>Click <strong>"Generate / Refresh Summaries"</strong> to synthesize your uploaded literature into common ground, methodological divergences, and research gaps.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="subtabIndividual" class="subtab-pane">
+            <div id="individualSummariesGrid" class="individual-summaries-grid">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: DRAFT REVIEW AUDITOR -->
+        <div id="tabReview" class="tab-pane">
+          <div class="pane-header-row">
+            <div>
+              <h2>Pre-Submission Pedagogical Draft Review</h2>
+              <p class="text-muted">Automated verification of survey structure completeness, logical flow, citation coverage, readability scores, and local source overlap.</p>
+            </div>
+            <div class="pane-actions">
+              <button id="btnSubmitDraftModal" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Submit New Draft Version
+              </button>
+            </div>
+          </div>
+
+          <!-- Review Version Selector & Metrics Overview -->
+          <div id="reviewContainer">
+            <div class="review-metrics-row">
+              <div class="metric-card health-metric">
+                <span class="metric-label">Draft Health Score</span>
+                <div class="health-score-val" id="metricHealthScore">--</div>
+                <span class="metric-sub" id="metricHealthSub">Based on structure, citations, flow</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Readability & Fog</span>
+                <div class="metric-number" id="metricReadability">--</div>
+                <span class="metric-sub" id="metricReadabilityGrade">--</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Source Overlap Risk</span>
+                <div class="metric-number" id="metricOverlapPct">--</div>
+                <span class="metric-sub" id="metricOverlapRisk">Local paper overlap</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Flagged Issues</span>
+                <div class="metric-issues-count">
+                  <span class="badge badge-critical" id="badgeCritCount">0 Critical</span>
+                  <span class="badge badge-warning" id="badgeWarnCount">0 Warnings</span>
+                </div>
+                <span class="metric-sub">Actionable pre-submission fixes</span>
+              </div>
+            </div>
+
+            <!-- Issues Filter Bar -->
+            <div class="issues-filter-bar">
+              <div class="filter-group">
+                <label>Filter Issues:</label>
+                <button class="filter-chip active" data-filter="all">All</button>
+                <button class="filter-chip" data-filter="critical">Critical</button>
+                <button class="filter-chip" data-filter="warning">Warning</button>
+                <button class="filter-chip" data-filter="suggestion">Suggestion</button>
+              </div>
+              <div class="version-select-group">
+                <label for="reviewVersionSelect">Review Version:</label>
+                <select id="reviewVersionSelect" class="form-select"></select>
+              </div>
+            </div>
+
+            <!-- Issues List -->
+            <div id="reviewIssuesList" class="issues-list">
+              <!-- Issue cards injected dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: AI RESEARCH CO-PILOT -->
+        <div id="tabChat" class="tab-pane">
+          <div class="pane-header-row">
+            <div>
+              <h2>Project-Scoped Conversational Co-Pilot</h2>
+              <p class="text-muted">Chat with rolling project memory and hybrid RAG retrieval over your papers and outline. Every claim is attributed with verifiable page badges.</p>
+            </div>
+            <div class="pane-actions">
+              <button id="btnClearChat" class="btn btn-outline btn-sm">
+                Clear Thread
+              </button>
+            </div>
+          </div>
+
+          <div class="chat-workspace">
+            <!-- Suggested quick action prompt chips -->
+            <div class="quick-prompts-bar">
+              <span class="quick-label">Suggested Prompts:</span>
+              <button class="quick-chip" data-prompt="What are the key differences between the methods proposed in our uploaded papers?">Compare methodologies</button>
+              <button class="quick-chip" data-prompt="What open challenges should I emphasize for Section 5 of our survey?">Identify open challenges</button>
+              <button class="quick-chip" data-prompt="Synthesize the limitations reported across all uploaded papers.">Synthesize limitations</button>
+              <button class="quick-chip" data-prompt="Help me write a transition between Background and Taxonomy sections.">Draft section transition</button>
+            </div>
+
+            <!-- Chat messages stream -->
+            <div id="chatMessagesContainer" class="chat-messages-container">
+              <div class="chat-message assistant-message">
+                <div class="message-avatar">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><rect x="4" y="8" width="16" height="12" rx="2"></rect><circle cx="9" cy="14" r="1"></circle><circle cx="15" cy="14" r="1"></circle></svg>
+                </div>
+                <div class="message-content">
+                  <p>Welcome! I'm your grounded survey co-pilot. I have full context of your uploaded literature, generated outline, and review audit. Ask me anything about synthesizing papers, building taxonomy tables, or structuring your survey arguments.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Input Form -->
+            <form id="chatForm" class="chat-input-row">
+              <input type="text" id="chatInput" placeholder="Ask a question about your papers, taxonomy, or draft..." autocomplete="off">
+              <button type="submit" id="btnSendChat" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: NEW PROJECT -->
+  <div id="modalNewProject" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Create New Survey Project</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewProject">
+        <div class="form-group">
+          <label for="inputProjectName">Project Title *</label>
+          <input type="text" id="inputProjectName" required placeholder="e.g. Survey on Retrieval-Augmented Generation">
+        </div>
+        <div class="form-group">
+          <label for="inputProjectTopic">Survey Topic & Scope</label>
+          <input type="text" id="inputProjectTopic" placeholder="e.g. Modern RAG architectures for multi-document synthesis">
+        </div>
+        <div class="form-group">
+          <label for="inputProjectDesc">Research Goals / Target Venue (Optional)</label>
+          <textarea id="inputProjectDesc" rows="3" placeholder="Notes on scope, course requirements (e.g. CS801), or target journal/conference"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT PAPER METADATA -->
+  <div id="modalEditPaper" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Extracted Paper Metadata</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="formEditPaper">
+        <input type="hidden" id="editPaperId">
+        <div class="form-group">
+          <label for="editPaperTitle">Paper Title</label>
+          <input type="text" id="editPaperTitle" required>
+        </div>
+        <div class="form-group">
+          <label for="editPaperAuthors">Authors</label>
+          <input type="text" id="editPaperAuthors">
+        </div>
+        <div class="form-group">
+          <label for="editPaperAbstract">Abstract</label>
+          <textarea id="editPaperAbstract" rows="6"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: REGENERATE OUTLINE WITH GUIDANCE -->
+  <div id="modalRegenOutline" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Regenerate Outline with Guidance</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="formRegenOutline">
+        <div class="form-group">
+          <label for="inputOutlineGuidance">Guidance Prompt / Special Focus</label>
+          <textarea id="inputOutlineGuidance" rows="3" placeholder="e.g., 'Make it more comparison-heavy', 'Focus heavily on low-resource edge deployment', or 'Structure taxonomy by retrieval paradigm'"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Generate Custom Outline</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD SECTION TO OUTLINE -->
+  <div id="modalAddSection" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add Section to Outline</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="formAddSection">
+        <div class="form-group">
+          <label for="inputSecNum">Section Number</label>
+          <input type="text" id="inputSecNum" placeholder="e.g. 4.1 or 8">
+        </div>
+        <div class="form-group">
+          <label for="inputSecTitle">Section Title *</label>
+          <input type="text" id="inputSecTitle" required placeholder="e.g. Robustness to Noisy Scanned Documents">
+        </div>
+        <div class="form-group">
+          <label for="inputSecDesc">Description & Scope</label>
+          <textarea id="inputSecDesc" rows="3" placeholder="What should be synthesized in this section?"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Section</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SUBMIT DRAFT FOR AUDIT -->
+  <div id="modalSubmitDraft" class="modal-overlay hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3>Submit Survey Draft for Review</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="formSubmitDraft">
+        <div class="form-group">
+          <label for="inputDraftTitle">Draft Version Title</label>
+          <input type="text" id="inputDraftTitle" value="Survey Paper Draft (Revision 1)">
+        </div>
+        <div class="form-group">
+          <label>Upload Draft Document (PDF, DOCX, MD, or TXT)</label>
+          <input type="file" id="inputDraftFile" accept=".pdf,.docx,.txt,.md" class="file-input-bordered">
+        </div>
+        <div class="form-divider"><span>OR PASTE TEXT DIRECTLY</span></div>
+        <div class="form-group">
+          <label for="inputDraftText">Paste Draft Content</label>
+          <textarea id="inputDraftText" rows="10" placeholder="Paste your introductory sections, taxonomy, or draft paragraphs here..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnRunAudit">Run Pedagogical Audit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS -->
+  <div id="modalSettings" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>AI Model & Gateway Settings</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="formSettings">
+        <div class="form-group">
+          <label for="settingProvider">Active LLM Provider</label>
+          <select id="settingProvider" class="form-select">
+            <option value="heuristic">Built-in Academic Heuristic (Offline, Zero API Key)</option>
+            <option value="openrouter">OpenRouter API (Claude 3.5 Sonnet / GPT-4o / Llama 3)</option>
+            <option value="openai">OpenAI API (GPT-4o / GPT-4o-mini)</option>
+            <option value="ollama">Local Ollama (localhost:11434)</option>
+          </select>
+        </div>
+        
+        <div id="groupOpenRouter" class="settings-provider-group">
+          <div class="form-group">
+            <label for="settingOpenRouterKey">OpenRouter API Key</label>
+            <input type="password" id="settingOpenRouterKey" placeholder="sk-or-v1-...">
+          </div>
+          <div class="form-group">
+            <label for="settingOpenRouterModel">OpenRouter Model</label>
+            <input type="text" id="settingOpenRouterModel" value="anthropic/claude-3.5-sonnet">
+          </div>
+        </div>
+
+        <div id="groupOpenAI" class="settings-provider-group hidden">
+          <div class="form-group">
+            <label for="settingOpenAIKey">OpenAI API Key</label>
+            <input type="password" id="settingOpenAIKey" placeholder="sk-proj-...">
+          </div>
+          <div class="form-group">
+            <label for="settingOpenAIModel">OpenAI Model</label>
+            <input type="text" id="settingOpenAIModel" value="gpt-4o-mini">
+          </div>
+        </div>
+
+        <div id="groupOllama" class="settings-provider-group hidden">
+          <div class="form-group">
+            <label for="settingOllamaUrl">Ollama Base URL</label>
+            <input type="text" id="settingOllamaUrl" value="http://localhost:11434">
+          </div>
+          <div class="form-group">
+            <label for="settingOllamaModel">Ollama Model</label>
+            <input type="text" id="settingOllamaModel" value="llama3">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="settingTemperature">Generation Temperature: <span id="tempValue">0.3</span></label>
+          <input type="range" id="settingTemperature" min="0.0" max="1.0" step="0.05" value="0.3">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

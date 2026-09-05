@@ -1,0 +1,207 @@
+\documentclass[10pt,a4paper]{article}
+
+% ==============================================================================
+% Layout & Typography (Strictly Calibrated for <= 3 Pages Maximum)
+% ==============================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=0.72in,top=0.7in,bottom=0.7in,footskip=0.25in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage[colorlinks=true, linkcolor=blue!75!black, citecolor=blue!75!black, urlcolor=blue!75!black]{hyperref}
+
+% Strict compact spacing to guarantee <= 3 pages
+\setlist{noitemsep, topsep=1.5pt, parsep=0pt, partopsep=0pt, leftmargin=1.2em}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+
+\titlespacing{\section}{0pt}{3.5pt plus 1pt minus 1pt}{1.5pt plus 1pt minus 1pt}
+\titlespacing{\subsection}{0pt}{2.5pt plus 1pt minus 1pt}{1pt plus 1pt minus 1pt}
+
+% ==============================================================================
+% 1. Title of the Project & Academic Metadata
+% ==============================================================================
+\title{\vspace{-1.6em}\large\textbf{Survey Paper Assistant: A Retrieval-Augmented Generation (RAG) Framework for First-Time Academic Writers}\vspace{-0.5em}}
+
+\author{
+    \textbf{Team Members:} Divyansh Agrawal (Roll No: 262IS013) \quad $|$ \quad Kadam Prashant (Roll No: 262IS016) \\
+    \textit{Course: CS801 Computing Lab --- M-Tech I Year CSE-IS (Semester I, Session 2026--27)} \\
+    \textit{Department of Computer Science and Engineering} \\
+    \textit{National Institute of Technology Karnataka (NITK), Surathkal, India}
+}
+
+\date{\vspace{-0.5em}\small\textbf{Due Date (Problem Identification):} September 04, 2026 \quad $|$ \quad \textbf{Final Evaluation:} November 10--13, 2026\vspace{-0.8em}}
+
+% ==============================================================================
+% Document Body
+% ==============================================================================
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent\small
+Authoring a scientific survey paper is an essential milestone in graduate computer science education. However, first-time student researchers routinely struggle with multi-document synthesis, taxonomy induction, technical paraphrasing, and pre-submission quality verification. We propose the \textbf{Survey Paper Assistant}, an end-to-end Retrieval-Augmented Generation (RAG) platform tailored for novice scholars. Operating strictly over user-supplied literature, the framework provides multi-PDF ingestion, grounded taxonomy induction, hierarchical summarization, automated draft auditing (structure, flow, citations, and source overlap), and an interactive project co-pilot. Provenance-backed responses eliminate hallucinations, helping students produce publication-ready survey drafts with academic rigor.
+\end{abstract}
+\vspace{-0.35em}
+\noindent\footnotesize\textbf{Keywords:} Retrieval-Augmented Generation (RAG), Academic Writing, Multi-Document Summarization, Draft Auditing, Natural Language Processing.
+
+% ------------------------------------------------------------------------------
+% 1. Description
+% ------------------------------------------------------------------------------
+\section{Description}
+The \textbf{Survey Paper Assistant} is an interactive pedagogical writing platform that mentors novice researchers through the preparation of a literature survey. Rather than acting as an unconstrained generative model that risks hallucinations and plagiarism, the system serves as an interactive scaffold grounded strictly in a user's curated literature set via Retrieval-Augmented Generation (RAG)~\cite{gao2024rag}.
+
+\textbf{Real-Time Problem Analysis \& Significance:} Novice scholars face intense cognitive overload when analyzing dozens of complex scientific papers. Beginners struggle to discover conceptual taxonomies, contrast competing methodologies, and identify open research gaps. Off-the-shelf generative tools (e.g., vanilla ChatGPT) are ill-suited as academic mentors because they hallucinate citations, omit verifiable provenance, and disregard scholarly publishing conventions. A specialized, literature-grounded system is critical to instill proper research practices.
+
+\textbf{Targeted Audience:} M-Tech/B.Tech students, early-stage postgraduate researchers, and student project cohorts in computing disciplines authoring their first comprehensive literature review.
+
+\textbf{Data Requirements:} The platform operates on: \textbf{(i)} Batches of 5--30 peer-reviewed scientific PDFs per project (IEEE, ACM, arXiv) with multi-column formats and figures; \textbf{(ii)} Extracted structural metadata (titles, abstracts, headings, references); \textbf{(iii)} Student-authored drafts (PDF/DOCX/Markdown) for auditing; and \textbf{(iv)} A benchmark collection of exemplary survey papers for validation.
+
+% ------------------------------------------------------------------------------
+% 2. Motivation
+% ------------------------------------------------------------------------------
+\section{Motivation}
+The transition from reading isolated papers to synthesizing a critical literature review presents distinct challenges:
+\begin{enumerate}
+    \item \textbf{Synthesis vs. Siloed Summaries:} Beginners typically write sequential, paper-by-paper summaries rather than synthesizing thematic comparisons and taxonomies across works.
+    \item \textbf{Academic Integrity \& Paraphrasing Deficits:} Inexperienced authors frequently struggle to synthesize complex technical claims into their own voice, risking unintentional verbatim overlap.
+    \item \textbf{Hallucination Hazards of Generic LLMs:} Unbounded language models routinely invent plausible-sounding citations and non-existent experimental results, destroying scholarly credibility.
+    \item \textbf{Formative Feedback Bottleneck:} Course instructors and faculty mentors have limited time to review multiple preliminary outlines and drafts before final grading.
+\end{enumerate}
+
+% ------------------------------------------------------------------------------
+% 3. Problem Statement and Objectives
+% ------------------------------------------------------------------------------
+\section{Problem Statement and Objectives}
+
+\textbf{Problem Statement:} \textit{To design, develop, and evaluate an interactive, retrieval-augmented academic writing platform that ingests multi-paper corpora, synthesizes comparative taxonomies, generates grounded multi-document summaries, and performs automated pedagogical draft auditing for novice researchers without hallucinating citations or compromising academic integrity.}
+
+\textbf{Core Objectives:}
+\begin{enumerate}
+    \item \textbf{Robust Multi-Paper Ingestion:} Extract text, headings, and metadata from multi-column PDFs, handling corrupt, scanned, or duplicate files gracefully.
+    \item \textbf{Grounded Outline Synthesis:} Cluster concepts across uploaded papers to induce a customized survey outline (background, taxonomy, comparative matrix, open challenges).
+    \item \textbf{Hierarchical Summarization:} Provide both per-paper breakdowns (problem, method, results, limitations) and cross-paper comparative syntheses with source traceability.
+    \item \textbf{Automated Draft Review:} Audit drafts for structural completeness, logical flow, citation coverage, readability, and text similarity against the source corpus.
+    \item \textbf{Context-Preserving Dialogue:} Provide a project-scoped conversational co-pilot with rolling memory and verified page-level citation attribution.
+\end{enumerate}
+
+% ------------------------------------------------------------------------------
+% 4. Solution Design (Tentative)
+% ------------------------------------------------------------------------------
+\section{Solution Design (Tentative)}
+The proposed platform comprises five interconnected modules:
+\begin{enumerate}
+    \item \textbf{Ingestion \& Preprocessing Subsystem:} Employs layout-aware PDF parsers (PyMuPDF) incorporating multimodal document extraction techniques~\cite{joshi2024robust} to extract clean text while preserving headings and tables. Content is chunked with boundary-aware sliding windows.
+    \item \textbf{Hybrid Indexing \& Retrieval Engine:} Combines dense semantic embeddings stored in ChromaDB with sparse lexical matching (BM25) and graph-enhanced retrieval methods~\cite{kamra2024enhancing} via Reciprocal Rank Fusion (RRF) for high recall.
+    \item \textbf{Thematic Outline \& Synthesis Engine:} Embeds paper abstracts and uses semantic clustering (HDBSCAN/K-Means) to derive thematic taxonomies. An instruction-tuned LLM formats these into an editable outline.
+    \item \textbf{Draft Review \& Similarity Auditor:} Inspects user drafts using AST-based section linters, Flesch-Kincaid readability scoring, sentence-level citation verifiers, and $n$-gram/embedding overlap checks against source papers.
+    \item \textbf{Workspace UI \& Conversational Agent:} A responsive web interface with an interactive outline manager, summary cards, and a citation-grounded co-pilot with context compression and document knowledge structures~\cite{knollmeyer2024document}.
+\end{enumerate}
+
+% ------------------------------------------------------------------------------
+% 5. Different Phases of the Project
+% ------------------------------------------------------------------------------
+\section{Different Phases of the Project}
+Aligned with the CS801 curriculum milestones, the project is structured into six progressive phases:
+\begin{itemize}
+    \item \textbf{Phase I: Problem Formulation \& Corpus Collection (Weeks 1--2, ending Sept 04):} Requirements specification, academic survey evaluation rubric definition, and reference dataset curation.
+    \item \textbf{Phase II: Architectural Finalization \& Module Allocation (Weeks 3--4, ending Sept 21):} Finalize subsystem design, allocate module responsibilities, and build the initial PDF ingestion pipeline for Continuous Evaluation-1.
+    \item \textbf{Phase III: Retrieval Indexing \& Ingestion Core (Weeks 5--7, ending Oct 12):} Implement hybrid dense-sparse retrieval, text extraction, and summarization pipelines for the Midsem Evaluation.
+    \item \textbf{Phase IV: Outline Induction \& Draft Review Engine (Weeks 8--10, ending Nov 01):} Construct topic clustering algorithms, taxonomy builders, draft linters, and similarity auditing tools for Continuous Evaluation-2.
+    \item \textbf{Phase V: Full-Stack Integration \& Conversational Co-pilot (Weeks 11--12):} Connect the FastAPI backend to the Next.js frontend, persistent session storage, and multi-format document export.
+    \item \textbf{Phase VI: Evaluation, User Study, \& Defense (Weeks 13--14, ending Nov 10--13):} Conduct empirical benchmarks and user evaluations with student cohorts, complete comprehensive final LaTeX reporting, and present project defense.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+% 6. Implementation Level Details
+% ------------------------------------------------------------------------------
+\section{Implementation Level Details}
+The system leverages production-grade, modular open-source technologies:
+\begin{itemize}
+    \item \textbf{Languages:} Python 3.11+ (Backend processing, NLP, RAG orchestration) and TypeScript (Frontend client).
+    \item \textbf{Backend Framework:} FastAPI for high-performance asynchronous REST endpoints; Celery/Redis for background ingestion queues.
+    \item \textbf{Document Parsing \& NLP:} PyMuPDF (\texttt{fitz}) for layout-aware PDF text extraction; spaCy for sentence boundary and linguistic feature analysis.
+    \item \textbf{Retrieval \& Embeddings:} ChromaDB for vector storage; Rank-BM25 for lexical matching; HuggingFace sentence embeddings for scientific representations.
+    \item \textbf{LLM Orchestration \& Unified Routing:} LangChain / LlamaIndex with unified API routing via OpenRouter~\cite{OpenRouter2026docs} (accessing Claude 3.5 Sonnet / GPT-4o) and local Ollama execution.
+    \item \textbf{Draft Auditing Metrics:} Sentence-level similarity scoring and local source paper overlap detection to prevent unintentional plagiarism.
+    \item \textbf{Database \& Storage:} SQLite/PostgreSQL with SQLAlchemy ORM for managing project states, paper metadata, and chat history.
+    \item \textbf{Frontend Interface:} React.js with Next.js, featuring responsive split-pane workspaces, drag-and-drop outline editors, and Markdown rendering.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+% 7. Expected Outcomes
+% ------------------------------------------------------------------------------
+\section{Expected Outcomes}
+\begin{enumerate}
+    \item \textbf{Functional Web Platform:} An end-to-end deployed web application supporting multi-paper project workspaces.
+    \item \textbf{Outline Formulation Efficiency:} $\ge 60\%$ reduction in the time required for novice authors to formulate a structured survey outline.
+    \item \textbf{Provenance-Backed Summaries:} 100\% citation traceability with page-level links to source documents, preventing hallucinations.
+    \item \textbf{Automated Diagnostic Feedback:} Pre-submission reports identifying missing survey sections, citation deficits, and high-similarity text fragments.
+    \item \textbf{Open Educational Resource:} A reproducible, open-source codebase and benchmark dataset for academic writing assistance.
+\end{enumerate}
+
+% ------------------------------------------------------------------------------
+% 8. Tentative Timelines
+% ------------------------------------------------------------------------------
+\section{Tentative Timelines}
+The schedule strictly mirrors the CS801 evaluation milestones specified in the course plan (Table~\ref{tab:timeline}).
+
+\begin{table}[H]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{0.95}
+\begin{tabularx}{\textwidth}{@{}lllX@{}}
+\toprule
+\textbf{Timeline} & \textbf{Course Milestone} & \textbf{Key Tasks \& Activities} & \textbf{Deliverable / Output} \\
+\midrule
+Sept 04, 2026 & Problem Identification & Problem formulation \& literature requirements & Extended Abstract (LaTeX, $\le 3$ pages) \\
+Sept 21, 2026 & Continuous Eval-1 & Architecture finalization \& module allocation & 10-min Presentation \& Q\&A \\
+Oct 12, 2026 & Midsem Evaluation & PDF ingestion \& hybrid retrieval pipeline & Progress Report, PPT, Code Demo \\
+Nov 01, 2026 & Continuous Eval-2 & Outline induction \& automated draft review & 15-min Presentation \& Code Demo \\
+Nov 10--13, 2026 & Endsem Evaluation & Full-stack integration, dialogue co-pilot, study & Comprehensive Final Report \& Demo \\
+\bottomrule
+\end{tabularx}
+\vspace{-0.5em}
+\caption{CS801 Course-Aligned Project Execution Timeline.}
+\label{tab:timeline}
+\end{table}
+
+\vspace{-0.6em}
+% ------------------------------------------------------------------------------
+% 9. References
+% ------------------------------------------------------------------------------
+\section{References}
+\vspace{-0.6em}
+\begingroup
+\renewcommand{\section}[2]{}% Suppress default unnumbered heading from thebibliography
+\begin{thebibliography}{5}
+\footnotesize
+\setlength{\itemsep}{-0.5pt}
+\setlength{\parskip}{0pt}
+\bibitem{gao2024rag}
+Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi, Yi Dai, Jiawei Sun, Meng Wang, Haofen Wang \textit{et al.}, ``Retrieval-Augmented Generation for Large Language Models: A Survey,'' \textit{arXiv preprint arXiv:2312.10997}, 2024.
+
+\bibitem{kamra2024enhancing}
+V.~Kamra, L.~Gupta, D.~Arora, and A.~K.~Yadav, ``Enhancing Document Retrieval Using AI and Graph-Based RAG Techniques,'' in \textit{Proc. 2024 5th International Conference on Communication, Computing \& Industry 6.0 (C2I6)}, Bengaluru, India, pp.~1--7, 2024, doi: 10.1109/C2I663243.2024.10895931.
+
+\bibitem{joshi2024robust}
+P.~Joshi, A.~Gupta, P.~Kumar, and M.~Sisodia, ``Robust Multi Model RAG Pipeline For Documents Containing Text, Table \& Images,'' in \textit{Proc. 2024 3rd International Conference on Applied Artificial Intelligence and Computing (ICAAIC)}, Salem, India, pp.~993--999, 2024, doi: 10.1109/ICAAIC60222.2024.10574972.
+
+\bibitem{knollmeyer2024document}
+S.~Knollmeyer, M.~U.~Akmal, L.~Koval, S.~Asif, S.~G.~Mathias, and D.~Großmann, ``Document Knowledge Graph to Enhance Question Answering with Retrieval Augmented Generation,'' in \textit{Proc. 2024 IEEE 29th International Conference on Emerging Technologies and Factory Automation (ETFA)}, Padova, Italy, pp.~1--4, 2024, doi: 10.1109/ETFA61755.2024.10711054.
+
+\bibitem{OpenRouter2026docs}
+OpenRouter Inc., ``Get Started with OpenRouter Documentation,'' \url{https://openrouter.ai/docs/quickstart}, accessed 2026.
+\end{thebibliography}
+\endgroup
+
+\end{document}
