@@ -10,6 +10,7 @@ import { PapersTabComponent } from './components/PapersTab.js';
 import { OutlineTabComponent } from './components/OutlineTab.js';
 import { SummariesTabComponent } from './components/SummariesTab.js';
 import { DraftReviewTabComponent } from './components/DraftReviewTab.js';
+import { DraftEditorTabComponent } from './components/DraftEditorTab.js';
 import { ChatTabComponent } from './components/ChatTab.js';
 import { ModalsManager } from './components/Modals.js';
 
@@ -75,12 +76,17 @@ class SurveyApp {
       onOpenSubmitDraftModal: () => this.modals.open('submitDraft')
     });
 
+    this.draftEditorTab = new DraftEditorTabComponent({
+      onDraftAudited: () => this.loadReviews()
+    });
+
     this.chatTab = new ChatTabComponent();
   }
 
   setupTabNavigation() {
     this.tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
         this.tabBtns.forEach(b => b.classList.remove('active'));
         this.tabPanes.forEach(p => p.classList.remove('active'));
         btn.classList.add('active');

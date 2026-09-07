@@ -5,6 +5,13 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
+
+# pyrefly: ignore [missing-import]
+from dotenv import load_dotenv
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+load_dotenv(dotenv_path)
+
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 DB_PATH = os.path.join(DATA_DIR, "survey_assistant.db")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
@@ -144,17 +151,24 @@ def init_db():
         """)
 
         default_settings = {
-            "llm_provider": "heuristic",
-            "openrouter_api_key": "",
-            "openrouter_model": "anthropic/claude-3.5-sonnet",
-            "openai_api_key": "",
-            "openai_model": "gpt-4o-mini",
-            "ollama_base_url": "http://localhost:11434",
-            "ollama_model": "llama3",
-            "temperature": "0.3"
+            "llm_provider": os.getenv("LLM_PROVIDER", "heuristic"),
+            "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
+            "openrouter_model": os.getenv("OPENROUTER_MODEL", "minimax/minimax-m3:free"),
+            "openai_api_key": os.getenv("OPENAI_API_KEY", ""),
+            "openai_model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+            "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            "ollama_model": os.getenv("OLLAMA_MODEL", "llama3"),
+            "temperature": os.getenv("TEMPERATURE", "0.3")
         }
         for k, v in default_settings.items():
             conn.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (k, v))
+
+        if os.getenv("OPENROUTER_API_KEY"):
+            conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('openrouter_api_key', ?)", (os.getenv("OPENROUTER_API_KEY"),))
+        if os.getenv("OPENROUTER_MODEL"):
+            conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('openrouter_model', ?)", (os.getenv("OPENROUTER_MODEL"),))
+        if os.getenv("LLM_PROVIDER"):
+            conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('llm_provider', ?)", (os.getenv("LLM_PROVIDER"),))
 
     conn.close()
 
@@ -506,7 +520,24 @@ def get_all_settings() -> Dict[str, str]:
     conn = get_db_connection()
     rows = conn.execute("SELECT key, value FROM settings").fetchall()
     conn.close()
-    return {r["key"]: r["value"] for r in rows}
+    settings = {r["key"]: r["value"] for r in rows}
+
+    env_keys = {
+        "OPENROUTER_API_KEY": "openrouter_api_key",
+        "OPENROUTER_MODEL": "openrouter_model",
+        "LLM_PROVIDER": "llm_provider",
+        "OPENAI_API_KEY": "openai_api_key",
+        "OPENAI_MODEL": "openai_model",
+        "OLLAMA_BASE_URL": "ollama_base_url",
+        "OLLAMA_MODEL": "ollama_model",
+        "TEMPERATURE": "temperature",
+    }
+    for env_k, setting_k in env_keys.items():
+        val = os.getenv(env_k)
+        if val is not None and val.strip() != "":
+            settings[setting_k] = val.strip()
+
+    return settings
 
 def set_setting(key: str, value: str):
     conn = get_db_connection()

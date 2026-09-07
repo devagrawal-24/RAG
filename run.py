@@ -2,6 +2,11 @@ import uvicorn
 import os
 import sys
 
+# pyrefly: ignore [missing-import]
+from dotenv import load_dotenv
+load_dotenv()
+
+
 if __name__ == "__main__":
     # Ensure current directory is in sys.path
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

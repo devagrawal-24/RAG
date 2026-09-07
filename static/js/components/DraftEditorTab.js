@@ -45,6 +45,7 @@ export class DraftEditorTabComponent {
 
     this.saveTimer = null;
     this.isCompiling = false;
+    this.isWaitingResponse = false;
 
     this.init();
   }
@@ -58,6 +59,13 @@ export class DraftEditorTabComponent {
     store.subscribe('currentProject', (project) => {
       if (project) {
         this.loadProjectDraft(project.id);
+      }
+    });
+
+    // Subscribe to chat messages to keep docked chat in sync
+    store.subscribe('chatMessages', (messages) => {
+      if (!this.isWaitingResponse) {
+        this.renderDockedChat(messages || []);
       }
     });
   }
@@ -99,13 +107,20 @@ export class DraftEditorTabComponent {
     this.titleInput?.addEventListener('input', () => this.queueAutoSave());
 
     // Insert Outline Skeleton Button
-    this.btnInsertOutline?.addEventListener('click', () => this.insertOutlineSkeleton());
+    this.btnInsertOutline?.addEventListener('click', (e) => {
+      e?.preventDefault();
+      this.insertOutlineSkeleton();
+    });
 
     // Compile & Review Button
-    this.btnCompile?.addEventListener('click', () => this.compileAndAudit());
+    this.btnCompile?.addEventListener('click', (e) => {
+      e?.preventDefault();
+      this.compileAndAudit();
+    });
 
     // Toggle Terminal Button
-    this.btnToggleTerminal?.addEventListener('click', () => {
+    this.btnToggleTerminal?.addEventListener('click', (e) => {
+      e?.preventDefault();
       this.terminalDrawer?.classList.toggle('hidden');
     });
   }
@@ -113,7 +128,8 @@ export class DraftEditorTabComponent {
   setupTerminalEvents() {
     // Switch between Problems, Metrics, and Console Output
     this.terminalTabs.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e?.preventDefault();
         this.terminalTabs.forEach(b => b.classList.remove('active'));
         this.terminalPanes.forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
@@ -123,7 +139,8 @@ export class DraftEditorTabComponent {
     });
 
     // Minimize button
-    this.btnMinimizeTerminal?.addEventListener('click', () => {
+    this.btnMinimizeTerminal?.addEventListener('click', (e) => {
+      e?.preventDefault();
       this.terminalDrawer?.classList.add('hidden');
     });
   }
@@ -131,6 +148,7 @@ export class DraftEditorTabComponent {
   setupDockedChat() {
     this.dockedChatForm?.addEventListener('submit', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       const text = this.dockedChatInput?.value?.trim();
       if (text) {
         this.sendDockedMessage(text);
@@ -138,7 +156,9 @@ export class DraftEditorTabComponent {
     });
 
     this.dockedChips.forEach(chip => {
-      chip.addEventListener('click', () => {
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const prompt = chip.dataset.prompt;
         if (prompt) this.sendDockedMessage(prompt);
       });
@@ -383,28 +403,71 @@ export class DraftEditorTabComponent {
   }
 
   // ----------------- Docked Live Co-Pilot Chat -----------------
+  renderDockedChat(messages = []) {
+    if (!this.dockedChatMessages) return;
+    this.dockedChatMessages.innerHTML = `
+      <div class="chat-message assistant-message">
+        <div class="message-avatar">✦</div>
+        <div class="message-content">
+          <p>Welcome! I'm your docked co-pilot. As you draft on the left, ask me for literature citations, taxonomy tables, or methodological trade-offs.</p>
+          <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Press <strong>"Audit & Compile Draft"</strong> anytime to compile diagnostics into the terminal below.</p>
+        </div>
+      </div>
+    `;
+    messages.forEach(m => this.appendDockedChatMessage(m));
+    this.scrollDockedToBottom();
+  }
+
   async sendDockedMessage(text) {
     const project = store.getState('currentProject');
-    if (!project || !text.trim()) return;
+    const trimmed = text.trim();
+    if (!project || !trimmed) return;
 
     if (this.dockedChatInput) this.dockedChatInput.value = '';
 
-    this.appendDockedChatMessage({ role: 'user', content: text, citations: [] });
+    const userMsg = { role: 'user', content: trimmed, citations: [] };
+    this.appendDockedChatMessage(userMsg);
 
-    // Typing indicator
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'chat-message assistant-message';
-    typingDiv.id = 'dockedTypingIndicator';
-    typingDiv.innerHTML = `<div class="message-avatar">...</div><div class="message-content"><p>Consulting literature corpus...</p></div>`;
-    this.dockedChatMessages?.appendChild(typingDiv);
+    this.isWaitingResponse = true;
+
+    // Buffer indicator bubble
+    const bufferDiv = document.createElement('div');
+    bufferDiv.className = 'chat-message assistant-message chat-buffer-msg';
+    bufferDiv.id = 'dockedTypingIndicator';
+    bufferDiv.innerHTML = `
+      <div class="message-avatar">✦</div>
+      <div class="message-content buffer-content">
+        <div class="chat-buffer-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="buffer-text">Consulting literature corpus & LLM...</span>
+      </div>
+    `;
+    this.dockedChatMessages?.appendChild(bufferDiv);
     this.scrollDockedToBottom();
 
     try {
-      const res = await api.sendMessage(project.id, text.trim());
-      typingDiv.remove();
+      const res = await api.sendMessage(project.id, trimmed);
+      this.isWaitingResponse = false;
+      bufferDiv.remove();
       this.appendDockedChatMessage(res);
-    } catch {
-      typingDiv.remove();
+
+      // Sync state so both Live Co-Pilot and Full Chat tab stay in sync
+      const currentMsgs = store.getState('chatMessages') || [];
+      store.setState('chatMessages', [...currentMsgs, userMsg, res]);
+    } catch (err) {
+      this.isWaitingResponse = false;
+      bufferDiv.remove();
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'chat-message assistant-message error-message';
+      errorDiv.innerHTML = `
+        <div class="message-avatar" style="background:var(--critical);">✕</div>
+        <div class="message-content" style="border-color:#fca5a5; background:#fff5f5; color:#b91c1c;">
+          <p>Failed to get response from AI Co-Pilot: ${escapeHtml(err.message || 'Check settings and API key')}</p>
+        </div>
+      `;
+      this.dockedChatMessages?.appendChild(errorDiv);
+      this.scrollDockedToBottom();
     }
   }
 

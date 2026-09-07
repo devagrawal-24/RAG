@@ -183,9 +183,9 @@
                 </div>
 
                 <div class="docked-quick-chips">
-                  <span class="docked-chip" data-prompt="Synthesize the primary methodology comparison for my current section.">Synthesize methods</span>
-                  <span class="docked-chip" data-prompt="Find literature citations to support a claim on retrieval accuracy.">Find citations</span>
-                  <span class="docked-chip" data-prompt="Suggest a transition between background and technical taxonomy.">Transition help</span>
+                  <button type="button" class="docked-chip" data-prompt="Synthesize the primary methodology comparison for my current section.">Synthesize methods</button>
+                  <button type="button" class="docked-chip" data-prompt="Find literature citations to support a claim on retrieval accuracy.">Find citations</button>
+                  <button type="button" class="docked-chip" data-prompt="Suggest a transition between background and technical taxonomy.">Transition help</button>
                 </div>
 
                 <div id="dockedChatMessages" class="docked-chat-messages">
@@ -199,8 +199,8 @@
                 </div>
 
                 <form id="dockedChatForm" class="docked-chat-form">
-                  <input type="text" id="dockedChatInput" placeholder="Ask live co-pilot for citations..." />
-                  <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                  <input type="text" id="dockedChatInput" placeholder="Ask live co-pilot for citations..." autocomplete="off" />
+                  <button type="submit" id="btnSendDockedChat" class="btn btn-primary btn-sm">Send</button>
                 </form>
               </div>
             </div>
@@ -466,7 +466,7 @@
               <p class="text-muted">Chat with rolling project memory and hybrid RAG retrieval over your papers and outline. Every claim is attributed with verifiable page badges.</p>
             </div>
             <div class="pane-actions">
-              <button id="btnClearChat" class="btn btn-outline btn-sm">
+              <button type="button" id="btnClearChat" class="btn btn-outline btn-sm">
                 Clear Thread
               </button>
             </div>
@@ -476,10 +476,10 @@
             <!-- Suggested quick action prompt chips -->
             <div class="quick-prompts-bar">
               <span class="quick-label">Suggested Prompts:</span>
-              <button class="quick-chip" data-prompt="What are the key differences between the methods proposed in our uploaded papers?">Compare methodologies</button>
-              <button class="quick-chip" data-prompt="What open challenges should I emphasize for Section 5 of our survey?">Identify open challenges</button>
-              <button class="quick-chip" data-prompt="Synthesize the limitations reported across all uploaded papers.">Synthesize limitations</button>
-              <button class="quick-chip" data-prompt="Help me write a transition between Background and Taxonomy sections.">Draft section transition</button>
+              <button type="button" class="quick-chip" data-prompt="What are the key differences between the methods proposed in our uploaded papers?">Compare methodologies</button>
+              <button type="button" class="quick-chip" data-prompt="What open challenges should I emphasize for Section 5 of our survey?">Identify open challenges</button>
+              <button type="button" class="quick-chip" data-prompt="Synthesize the limitations reported across all uploaded papers.">Synthesize limitations</button>
+              <button type="button" class="quick-chip" data-prompt="Help me write a transition between Background and Taxonomy sections.">Draft section transition</button>
             </div>
 
             <!-- Chat messages stream -->

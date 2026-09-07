@@ -1,6 +1,8 @@
 import os
 import shutil
 import uuid
+from dotenv import load_dotenv
+load_dotenv()
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -415,6 +417,73 @@ def api_chat(project_id: str, req: ChatReq):
     retriever = HybridRetriever(chunks)
     retrieved_chunks = retriever.query(user_msg, top_k=4)
 
+    # 2. Out-of-scope detection: check if the question is relevant to the project's data
+    #    If no chunks exist or the best retrieval scores are too low,
+    #    the question is likely outside the scope of the uploaded papers.
+    #    EXCEPTION: Writing-assistance requests (synonyms, rephrasing, grammar, etc.)
+    #    are always allowed since they are valid academic co-pilot tasks.
+
+    # Keywords that indicate a writing-assistance request — these bypass scope filtering
+    WRITING_ASSIST_KEYWORDS = {
+        "synonym", "synonyms", "antonym", "antonyms",
+        "rephrase", "rephrasing", "rewrite", "reword",
+        "paraphrase", "paraphrasing",
+        "grammar", "grammatical", "proofread", "proofreading",
+        "sentence", "paragraph", "reformat", "restructure",
+        "formal", "informal", "academic tone", "tone",
+        "clarity", "concise", "shorten", "expand", "elaborate",
+        "transition", "cohesion", "coherence",
+        "vocabulary", "word choice", "diction",
+        "passive voice", "active voice",
+        "citation format", "reference style", "apa", "mla", "ieee",
+        "heading", "title suggestion",
+    }
+
+    msg_lower = user_msg.lower()
+    is_writing_assist = any(kw in msg_lower for kw in WRITING_ASSIST_KEYWORDS)
+
+    OUT_OF_SCOPE_MSG = (
+        "Thank you for your question! However, it appears to be outside the scope of the "
+        "papers and materials uploaded to this project. I can only assist with questions "
+        "related to the literature in your project workspace.\n\n"
+        "Here are some things I *can* help you with:\n"
+        "- Summarizing and comparing the uploaded papers\n"
+        "- Explaining methodologies discussed in your literature\n"
+        "- Helping you draft and structure your survey sections\n"
+        "- Identifying research gaps across your sources\n"
+        "- Rephrasing sentences, suggesting synonyms, and improving academic tone\n\n"
+        "Please try rephrasing your question to relate it to your project's topic, "
+        "or upload additional relevant papers to expand the knowledge base."
+    )
+
+    is_out_of_scope = False
+
+    if not chunks:
+        # No papers uploaded at all — everything is out of scope
+        # But still allow writing-assistance requests (they don't need source material)
+        if not is_writing_assist:
+            is_out_of_scope = True
+            OUT_OF_SCOPE_MSG = (
+                "It looks like there are no papers uploaded to this project yet, so I don't "
+                "have any source material to draw from. Please upload one or more research "
+                "papers first, and then I'll be happy to help you explore and synthesize them!"
+            )
+    elif retrieved_chunks and not is_writing_assist:
+        # Check relevance scores of the best-matching chunk
+        top_chunk = retrieved_chunks[0]
+        top_rrf = top_chunk.get("rrf_score", 0)
+        top_bm25 = top_chunk.get("bm25_score", 0)
+        top_dense = top_chunk.get("dense_score", 0)
+
+        # If both sparse (BM25) and dense scores are very low, the question
+        # has essentially zero lexical or semantic overlap with the corpus.
+        if top_rrf < 0.015 and top_bm25 < 0.5 and top_dense < 0.05:
+            is_out_of_scope = True
+
+    if is_out_of_scope:
+        assistant_msg = add_chat_message(project_id, "assistant", OUT_OF_SCOPE_MSG, [])
+        return assistant_msg
+
     # Format citations
     citations = []
     context_blocks = []
@@ -440,7 +509,17 @@ def api_chat(project_id: str, req: ChatReq):
         "You are strictly scoped to this student's project. "
         "Help the student synthesize papers, compare methodologies, craft clear survey sections, and resolve questions. "
         "Always ground your claims in the provided source excerpts and reference the relevant paper titles and pages. "
-        "Maintain high academic rigor and pedagogical clarity."
+        "Maintain high academic rigor and pedagogical clarity.\n\n"
+        "IMPORTANT SCOPE RULES:\n"
+        "1. ALWAYS help with academic writing tasks such as: suggesting synonyms, rephrasing "
+        "sentences, paraphrasing, improving grammar, adjusting tone (formal/informal), "
+        "expanding or shortening text, improving clarity, and formatting citations. "
+        "These are ALWAYS in scope regardless of topic.\n"
+        "2. If the student's question is clearly unrelated to BOTH the project's literature "
+        "AND academic writing assistance (e.g., personal questions, coding help, recipes, "
+        "general trivia), politely decline and explain that you can only assist with "
+        "questions related to their project's literature and academic writing.\n"
+        "3. Do NOT fabricate or hallucinate information beyond what is grounded in the provided passages."
     )
 
     full_prompt = (

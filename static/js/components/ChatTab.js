@@ -12,6 +12,7 @@ export class ChatTabComponent {
     this.input = $('#chatInput');
     this.btnClear = $('#btnClearChat');
     this.quickChips = $$('.quick-chip');
+    this.isWaitingResponse = false;
 
     this.init();
   }
@@ -19,19 +20,30 @@ export class ChatTabComponent {
   init() {
     this.form?.addEventListener('submit', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       this.sendMessage(this.input.value);
     });
 
-    this.btnClear?.addEventListener('click', () => this.clearChat());
+    this.btnClear?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.clearChat();
+    });
 
     this.quickChips.forEach(chip => {
-      chip.addEventListener('click', () => {
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const prompt = chip.dataset.prompt;
         if (prompt) this.sendMessage(prompt);
       });
     });
 
-    store.subscribe('chatMessages', (messages) => this.render(messages || []));
+    store.subscribe('chatMessages', (messages) => {
+      if (!this.isWaitingResponse) {
+        this.render(messages || []);
+      }
+    });
   }
 
   render(messages = []) {
@@ -91,26 +103,48 @@ export class ChatTabComponent {
     const trimmed = text.trim();
     if (!project || !trimmed) return;
 
-    // Optimistic user bubble
-    this.appendMessage({ role: 'user', content: trimmed, citations: [] });
+    const userMsg = { role: 'user', content: trimmed, citations: [] };
+    this.appendMessage(userMsg);
     if (this.input) this.input.value = '';
 
-    // Typing indicator
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'chat-message assistant-message typing-indicator-msg';
-    typingDiv.innerHTML = `
+    this.isWaitingResponse = true;
+
+    // Buffer indicator
+    const bufferDiv = document.createElement('div');
+    bufferDiv.className = 'chat-message assistant-message chat-buffer-msg';
+    bufferDiv.id = 'chatTypingIndicator';
+    bufferDiv.innerHTML = `
       <div class="message-avatar"><span class="spin-dot"></span></div>
-      <div class="message-content"><p>Retrieving evidence from literature corpus...</p></div>
+      <div class="message-content buffer-content">
+        <div class="chat-buffer-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="buffer-text">Consulting literature corpus & LLM...</span>
+      </div>
     `;
-    this.container.appendChild(typingDiv);
+    this.container?.appendChild(bufferDiv);
     this.scrollToBottom();
 
     try {
       const response = await api.sendMessage(project.id, trimmed);
-      typingDiv.remove();
+      this.isWaitingResponse = false;
+      bufferDiv.remove();
       this.appendMessage(response);
-    } catch {
-      typingDiv.remove();
+      const currentMsgs = store.getState('chatMessages') || [];
+      store.setState('chatMessages', [...currentMsgs, userMsg, response]);
+    } catch (err) {
+      this.isWaitingResponse = false;
+      bufferDiv.remove();
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'chat-message assistant-message error-message';
+      errorDiv.innerHTML = `
+        <div class="message-avatar" style="background:var(--critical);">✕</div>
+        <div class="message-content" style="border-color:#fca5a5; background:#fff5f5; color:#b91c1c;">
+          <p>Failed to get response from AI Co-Pilot: ${escapeHtml(err.message || 'Check settings and API key')}</p>
+        </div>
+      `;
+      this.container?.appendChild(errorDiv);
+      this.scrollToBottom();
     }
   }
 
