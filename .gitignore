@@ -8,7 +8,7 @@ data/uploads/
 # Virtual Environments
 env/
 .env/
-venv/
+.venv/
 .env
 .env.*
 

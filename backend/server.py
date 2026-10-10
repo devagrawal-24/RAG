@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from backend.database import (
     init_db, list_projects, create_project, get_project, update_project, delete_project,
     add_paper, update_paper_metadata, get_paper, list_papers, delete_paper,
+    search_papers_for_project, find_papers_by_mentions,
     find_duplicate_paper, save_chunks, get_project_chunks,
     get_outline, save_outline, get_summaries, save_summary,
     save_draft_review, get_draft_review, list_draft_reviews,
@@ -138,6 +139,10 @@ def api_delete_project(project_id: str):
 @app.get("/api/projects/{project_id}/papers")
 def api_list_papers(project_id: str):
     return list_papers(project_id)
+
+@app.get("/api/projects/{project_id}/papers/search")
+def api_search_papers(project_id: str, q: str = ""):
+    return search_papers_for_project(project_id, q)
 
 @app.post("/api/projects/{project_id}/papers")
 async def api_upload_papers(project_id: str, background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
@@ -412,18 +417,43 @@ def api_chat(project_id: str, req: ChatReq):
     # Add user message to history
     add_chat_message(project_id, "user", user_msg)
 
-    # 1. Retrieve relevant chunks using Hybrid RAG
+    # 1. Check for @-Mention Document References
+    import re
+    has_mention_trigger = "@" in user_msg
+    referenced_papers = []
+
+    if has_mention_trigger:
+        bracket_mentions = re.findall(r'@\[([^\]]+)\]', user_msg)
+        word_mentions = re.findall(r'@([a-zA-Z0-9_\-\.\:\s]{2,})', user_msg)
+        all_mention_terms = bracket_mentions + word_mentions
+
+        if all_mention_terms:
+            referenced_papers = find_papers_by_mentions(project_id, all_mention_terms)
+
+        if not referenced_papers:
+            # Fallback search for text following @
+            raw_queries = re.findall(r'@([^\n,;!\?]+)', user_msg)
+            for rq in raw_queries:
+                clean_q = rq.strip()
+                if clean_q:
+                    matched_search = search_papers_for_project(project_id, clean_q)
+                    for m in matched_search:
+                        if not any(p["id"] == m["id"] for p in referenced_papers):
+                            referenced_papers.append(m)
+
+    # 2. Retrieve relevant chunks using Hybrid RAG
     chunks = get_project_chunks(project_id)
     retriever = HybridRetriever(chunks)
-    retrieved_chunks = retriever.query(user_msg, top_k=4)
+    retrieved_chunks = retriever.query(user_msg, top_k=5)
 
-    # 2. Out-of-scope detection: check if the question is relevant to the project's data
-    #    If no chunks exist or the best retrieval scores are too low,
-    #    the question is likely outside the scope of the uploaded papers.
-    #    EXCEPTION: Writing-assistance requests (synonyms, rephrasing, grammar, etc.)
-    #    are always allowed since they are valid academic co-pilot tasks.
+    # If papers were explicitly @-mentioned, ensure their chunks are retrieved as well
+    if referenced_papers:
+        ref_paper_ids = {p["id"] for p in referenced_papers}
+        specific_chunks = [c for c in chunks if c.get("paper_id") in ref_paper_ids]
+        # Prepend specific paper chunks
+        retrieved_chunks = specific_chunks[:4] + [c for c in retrieved_chunks if c.get("paper_id") not in ref_paper_ids][:3]
 
-    # Keywords that indicate a writing-assistance request — these bypass scope filtering
+    # 3. Out-of-scope detection
     WRITING_ASSIST_KEYWORDS = {
         "synonym", "synonyms", "antonym", "antonyms",
         "rephrase", "rephrasing", "rewrite", "reword",
@@ -459,25 +489,21 @@ def api_chat(project_id: str, req: ChatReq):
     is_out_of_scope = False
 
     if not chunks:
-        # No papers uploaded at all — everything is out of scope
-        # But still allow writing-assistance requests (they don't need source material)
-        if not is_writing_assist:
+        if not is_writing_assist and not has_mention_trigger:
             is_out_of_scope = True
             OUT_OF_SCOPE_MSG = (
                 "It looks like there are no papers uploaded to this project yet, so I don't "
                 "have any source material to draw from. Please upload one or more research "
                 "papers first, and then I'll be happy to help you explore and synthesize them!"
             )
-    elif retrieved_chunks and not is_writing_assist:
-        # Check relevance scores of the best-matching chunk
+    elif retrieved_chunks and not is_writing_assist and not has_mention_trigger:
         top_chunk = retrieved_chunks[0]
         top_rrf = top_chunk.get("rrf_score", 0)
         top_bm25 = top_chunk.get("bm25_score", 0)
         top_dense = top_chunk.get("dense_score", 0)
 
-        # If both sparse (BM25) and dense scores are very low, the question
-        # has essentially zero lexical or semantic overlap with the corpus.
-        if top_rrf < 0.015 and top_bm25 < 0.5 and top_dense < 0.05:
+        # Require meaningful lexical (BM25 >= 1.2) or semantic (dense_score >= 0.12) overlap
+        if top_bm25 < 1.2 and top_dense < 0.12 and top_rrf < 0.025:
             is_out_of_scope = True
 
     if is_out_of_scope:
@@ -487,6 +513,28 @@ def api_chat(project_id: str, req: ChatReq):
     # Format citations
     citations = []
     context_blocks = []
+
+    # Inject Explicit @-Mention Document Metadata if present
+    mention_context_str = ""
+    if referenced_papers:
+        ref_blocks = []
+        for p in referenced_papers:
+            ref_blocks.append(
+                f"DOCUMENT ID: {p['id']}\n"
+                f"TITLE: {p.get('title') or p.get('original_name')}\n"
+                f"AUTHORS: {p.get('authors') or 'Unknown Authors'}\n"
+                f"ABSTRACT: {p.get('abstract') or 'No abstract provided'}\n"
+                f"KEY FINDINGS: {p.get('key_findings') or 'N/A'}"
+            )
+            citations.append({
+                "paper_id": p['id'],
+                "paper_title": p.get('title') or p.get('original_name'),
+                "page_num": 1,
+                "section_title": "Abstract / Referenced Metadata",
+                "snippet": (p.get('abstract') or p.get('key_findings') or "")[:280]
+            })
+        mention_context_str = "EXPLICITLY REFERENCED PAPERS VIA @-MENTION:\n" + "\n---\n".join(ref_blocks)
+
     for c in retrieved_chunks:
         cit = {
             "paper_id": c.get("paper_id"),
@@ -495,51 +543,49 @@ def api_chat(project_id: str, req: ChatReq):
             "section_title": c.get("section_title", "General"),
             "snippet": c.get("content", "")[:280] + "..."
         }
-        citations.append(cit)
+        if not any(existing["paper_id"] == cit["paper_id"] and existing["snippet"] == cit["snippet"] for existing in citations):
+            citations.append(cit)
         context_blocks.append(f"[{cit['paper_title']} | Page {cit['page_num']} | Section {cit['section_title']}]:\n{c.get('content')}")
 
-    context_str = "\n\n---\n\n".join(context_blocks) if context_blocks else "No relevant source papers found."
+    context_str = "\n\n---\n\n".join(context_blocks) if context_blocks else "No relevant source passages found."
 
-    # Outline & summaries context
     outline = get_outline(project_id)
     outline_context = f"Project Outline has {len(outline['sections'])} sections." if outline and outline.get("sections") else "No outline generated yet."
 
+    topic_str = project.get('topic') or project.get('name') or 'Academic Survey'
+
+    # System Prompt with Strict Scope Boundaries & Document Reference Handler (@-Trigger) Rules
     system_prompt = (
         "You are the Survey Paper Assistant Co-Pilot, an expert academic writing advisor. "
-        "You are strictly scoped to this student's project. "
-        "Help the student synthesize papers, compare methodologies, craft clear survey sections, and resolve questions. "
-        "Always ground your claims in the provided source excerpts and reference the relevant paper titles and pages. "
-        "Maintain high academic rigor and pedagogical clarity.\n\n"
-        "IMPORTANT SCOPE RULES:\n"
-        "1. ALWAYS help with academic writing tasks such as: suggesting synonyms, rephrasing "
-        "sentences, paraphrasing, improving grammar, adjusting tone (formal/informal), "
-        "expanding or shortening text, improving clarity, and formatting citations. "
-        "These are ALWAYS in scope regardless of topic.\n"
-        "2. If the student's question is clearly unrelated to BOTH the project's literature "
-        "AND academic writing assistance (e.g., personal questions, coding help, recipes, "
-        "general trivia), politely decline and explain that you can only assist with "
-        "questions related to their project's literature and academic writing.\n"
-        "3. Do NOT fabricate or hallucinate information beyond what is grounded in the provided passages."
+        f"You are strictly scoped to this student's research project on '{topic_str}'.\n\n"
+        "STRICT MANDATORY SCOPE BOUNDARIES:\n"
+        "1. EXCLUSIVELY LITERATURE & ACADEMIC WRITING: You must ONLY answer questions directly related to the provided research papers, project topic, or academic writing assistance (e.g. suggesting synonyms, rephrasing sentences, paraphrasing, improving grammar, adjusting academic tone, structuring survey sections, or formatting citations).\n"
+        "2. REFUSE OFF-TOPIC & GENERAL TRIVIA: If the user asks about general knowledge, recipes, sports, pop culture, general coding/scripting, personal advice, or anything unrelated to their project literature and academic writing, YOU MUST REFUSE TO ANSWER.\n"
+        f"   Mandatory Refusal Format: 'I am strictly scoped to assist with your research project on \"{topic_str}\" and academic writing. I cannot answer off-topic or general knowledge questions.'\n"
+        "3. DOCUMENT REFERENCE HANDLER (@-TRIGGER):\n"
+        "   - When the user references papers via '@' (e.g. '@papername'), ground your response in the referenced paper metadata.\n"
+        "   - MULTI-PAPER REFERENCE: Synthesize and compare findings across ALL referenced papers.\n"
+        "4. TONE & CONSTRAINTS: Keep responses concise, academic, and directly tied to the text, abstracts, or findings of the referenced papers. Do NOT hallucinate paper details, authors, or findings that are not present in the database snippets provided."
     )
 
-    full_prompt = (
-        f"Project: '{project.get('name')}' (Topic: '{project.get('topic')}')\n"
-        f"Outline Status: {outline_context}\n\n"
-        f"Relevant Retrieved Literature Passages:\n{context_str}\n\n"
-        f"Student's Question: {user_msg}"
-    )
+    full_prompt_parts = [
+        f"Project: '{project.get('name')}' (Topic: '{project.get('topic')}')",
+        f"Outline Status: {outline_context}"
+    ]
+
+    if mention_context_str:
+        full_prompt_parts.append(mention_context_str)
+
+    full_prompt_parts.append(f"Relevant Literature Passages:\n{context_str}")
+    full_prompt_parts.append(f"Student's Question: {user_msg}")
+
+    full_prompt = "\n\n".join(full_prompt_parts)
 
     settings = get_all_settings()
     client = LLMClient(settings)
     
     # Generate response
     response_content = client.generate([{"role": "user", "content": full_prompt}], system_prompt)
-
-    # If heuristic fallback, enrich with citation overview
-    if client.provider == "heuristic" or not (settings.get("openrouter_api_key") or settings.get("openai_api_key")):
-        if citations:
-            source_list = "\n".join([f"- **{c['paper_title']}** (Page {c['page_num']}, {c['section_title']}): \"{c['snippet']}\"" for c in citations[:2]])
-            response_content += f"\n\n**Evidence from Ingested Papers:**\n{source_list}"
 
     assistant_msg = add_chat_message(project_id, "assistant", response_content, citations)
     return assistant_msg

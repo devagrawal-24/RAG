@@ -694,17 +694,6 @@
     const isAssistant = msg.role === 'assistant';
     div.className = `chat-message ${isAssistant ? 'assistant-message' : 'user-message'}`;
 
-    let citationsHtml = '';
-    if (msg.citations && msg.citations.length > 0) {
-      const cards = msg.citations.map(c => `
-        <div class="citation-card">
-          <strong>[${escapeHtml(c.paper_title)}] (Page ${c.page_num}, ${escapeHtml(c.section_title)})</strong>:
-          <em>"${escapeHtml(c.snippet)}"</em>
-        </div>
-      `).join('');
-      citationsHtml = `<div class="chat-citations"><div style="font-size:11px; font-weight:700; color:#a5b4fc; margin-bottom:4px;">VERIFIABLE LITERATURE CITATIONS:</div>${cards}</div>`;
-    }
-
     div.innerHTML = `
       <div class="message-avatar">
         ${isAssistant ? 
@@ -713,7 +702,6 @@
       </div>
       <div class="message-content">
         ${formatMarkdown(msg.content)}
-        ${citationsHtml}
       </div>
     `;
     container.appendChild(div);
