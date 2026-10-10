@@ -7,6 +7,7 @@ import { escapeHtml, formatMarkdown } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
 import { api } from '../api.js';
 import { store } from '../state.js';
+import { MentionPopover } from './MentionPopover.js';
 
 export class DraftEditorTabComponent {
   constructor({ onDraftAudited }) {
@@ -146,6 +147,9 @@ export class DraftEditorTabComponent {
   }
 
   setupDockedChat() {
+    if (this.dockedChatInput) {
+      this.mentionPopover = new MentionPopover(this.dockedChatInput);
+    }
     this.dockedChatForm?.addEventListener('submit', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -478,21 +482,10 @@ export class DraftEditorTabComponent {
     const isAssistant = msg.role === 'assistant';
     div.className = `chat-message ${isAssistant ? 'assistant-message' : 'user-message'}`;
 
-    let citationsHtml = '';
-    if (msg.citations && msg.citations.length > 0) {
-      const cards = msg.citations.map(c => `
-        <div class="docked-citation-chip" title="${escapeHtml(c.snippet)}">
-          📖 <strong>[${escapeHtml(c.paper_title)}]</strong> (p. ${c.page_num || 1})
-        </div>
-      `).join('');
-      citationsHtml = `<div class="docked-citations-row">${cards}</div>`;
-    }
-
     div.innerHTML = `
       <div class="message-avatar">${isAssistant ? '✦' : '👤'}</div>
       <div class="message-content">
         ${formatMarkdown(msg.content)}
-        ${citationsHtml}
       </div>
     `;
     this.dockedChatMessages.appendChild(div);

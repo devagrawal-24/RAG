@@ -35,6 +35,7 @@ export const api = {
 
   // Papers
   getPapers: (projectId) => request(`/api/projects/${projectId}/papers`),
+  searchPapers: (projectId, q = '') => request(`/api/projects/${projectId}/papers/search?q=${encodeURIComponent(q)}`),
   uploadPapers: (projectId, formData) => request(`/api/projects/${projectId}/papers`, {
     method: 'POST',
     body: formData
