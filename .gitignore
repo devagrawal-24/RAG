@@ -4,3 +4,14 @@ __pycache__/
 data/*.sqlite
 data/*.db
 data/uploads/
+
+# Virtual Environments
+env/
+.env/
+venv/
+.env
+.env.*
+
+# IDEs and editors
+.vscode/
+

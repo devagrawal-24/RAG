@@ -29,6 +29,9 @@ export const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }),
+  deleteProject: (id) => request(`/api/projects/${id}`, {
+    method: 'DELETE'
+  }),
 
   // Papers
   getPapers: (projectId) => request(`/api/projects/${projectId}/papers`),
