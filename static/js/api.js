@@ -74,6 +74,11 @@ export const api = {
     method: 'POST',
     body: formData
   }),
+  compileDraft: (projectId, latex_source, title) => request(`/api/projects/${projectId}/draft/compile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latex_source, title })
+  }),
   getDraft: (projectId) => request(`/api/projects/${projectId}/draft`),
   saveDraft: (projectId, data) => request(`/api/projects/${projectId}/draft`, {
     method: 'PUT',

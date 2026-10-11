@@ -27,6 +27,7 @@ from backend.outline_generator import generate_outline
 from backend.summarizer import summarize_single_paper, synthesize_combined_summary
 from backend.draft_reviewer import audit_draft
 from backend.llm_client import LLMClient
+from backend.latex_compiler import compile_latex_to_html
 
 # Initialize database
 init_db()
@@ -398,6 +399,42 @@ def api_save_project_draft(project_id: str, req: ProjectDraftReq):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return save_project_draft(project_id, req.title or "Survey Paper Draft", req.content)
+
+
+# ----------------- LaTeX Compile Preview Endpoint -----------------
+class LatexCompileReq(BaseModel):
+    latex_source: str
+    title: Optional[str] = "Draft"
+
+@app.post("/api/projects/{project_id}/draft/compile")
+def api_compile_latex_draft(project_id: str, req: LatexCompileReq):
+    """Compile LaTeX source to an HTML preview and run structural audit simultaneously."""
+    project = get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    latex_src = req.latex_source.strip()
+    if not latex_src:
+        raise HTTPException(status_code=400, detail="LaTeX source cannot be empty.")
+
+    # Compile LaTeX → HTML preview
+    compile_result = compile_latex_to_html(latex_src)
+
+    # Run full audit on the same content (strips LaTeX internally)
+    source_chunks = get_project_chunks(project_id)
+    audit_results = audit_draft(latex_src, source_chunks)
+
+    return {
+        "html": compile_result["html"],
+        "pdf_pages": compile_result.get("pdf_pages", []),
+        "has_pdf": compile_result.get("has_pdf", False),
+        "warnings": compile_result["warnings"],
+        "meta": compile_result["meta"],
+        "health_score": audit_results["health_score"],
+        "readability": audit_results["readability"],
+        "issues": audit_results["issues"],
+        "overlap": audit_results["overlap"],
+    }
 
 # ----------------- Project Co-Pilot Chat Endpoints -----------------
 @app.get("/api/projects/{project_id}/chat")

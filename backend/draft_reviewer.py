@@ -30,12 +30,69 @@ def count_syllables(word: str) -> int:
         count = max(1, count - 1)
     return max(1, count)
 
+def strip_latex_commands(text: str) -> str:
+    """Strips LaTeX commands and comments to leave clean prose for readability metrics."""
+    # Remove comments
+    clean = re.sub(r"%.*", "", text)
+    # Remove preamble commands
+    clean = re.sub(r"\\(?:documentclass|usepackage|geometry|setlist|titlespacing|setlength|title|author|date)\b(?:\[[^\]]*\])?(?:\{[^\}]*\})*", "", clean)
+    # Convert section headings to text
+    clean = re.sub(r"\\(?:sub)*section\*?\{([^\}]+)\}", r"\1.", clean)
+    # Convert text formatting commands
+    clean = re.sub(r"\\(?:textbf|textit|emph|texttt|caption|label|cite|ref)\{([^\}]+)\}", r"\1", clean)
+    # Remove \begin{...} and \end{...}
+    clean = re.sub(r"\\[be][en]gin\{[^\}]+\}", "", clean)
+    # Remove remaining backslash commands
+    clean = re.sub(r"\\[a-zA-Z]+\b", "", clean)
+    return clean.strip()
+
+def check_latex_syntax(text: str) -> List[Dict[str, Any]]:
+    """Audits LaTeX environment balance and core document structure."""
+    issues = []
+    
+    # Check document structure
+    if "\\begin{document}" in text and "\\end{document}" not in text:
+        issues.append({
+            "category": "syntax",
+            "severity": "critical",
+            "location": "LaTeX Document Structure",
+            "title": "Unclosed LaTeX Document Environment",
+            "description": "Found '\\begin{document}' without a matching '\\end{document}'.",
+            "suggestion": "Add '\\end{document}' at the end of your LaTeX file."
+        })
+
+    # Environment stack verification
+    begins = re.findall(r"\\begin\{([a-zA-Z0-9_\*]+)\}", text)
+    ends = re.findall(r"\\end\{([a-zA-Z0-9_\*]+)\}", text)
+    
+    begin_counts = {}
+    for b in begins:
+        begin_counts[b] = begin_counts.get(b, 0) + 1
+    end_counts = {}
+    for e in ends:
+        end_counts[e] = end_counts.get(e, 0) + 1
+
+    for env, count in begin_counts.items():
+        e_count = end_counts.get(env, 0)
+        if count > e_count:
+            issues.append({
+                "category": "syntax",
+                "severity": "critical",
+                "location": f"LaTeX Environment '\\begin{{{env}}}'",
+                "title": f"Unmatched LaTeX Environment: {env}",
+                "description": f"Environment '\\begin{{{env}}}' occurs {count} time(s) but '\\end{{{env}}}' occurs {e_count} time(s).",
+                "suggestion": f"Add '\\end{{{env}}}' to close the environment properly."
+            })
+
+    return issues
+
 def compute_readability_metrics(text: str) -> Dict[str, Any]:
-    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-    sentences = re.split(r"(?<=[.!?])\s+", text)
+    prose = strip_latex_commands(text) if "\\" in text else text
+    paragraphs = [p.strip() for p in prose.split("\n\n") if p.strip()]
+    sentences = re.split(r"(?<=[.!?])\s+", prose)
     sentences = [s.strip() for s in sentences if len(s.strip()) > 3]
 
-    words = re.findall(r"\b[A-Za-z0-9_-]+\b", text)
+    words = re.findall(r"\b[A-Za-z0-9_-]+\b", prose)
     total_words = len(words)
     total_sentences = max(len(sentences), 1)
     total_paragraphs = max(len(paragraphs), 1)
@@ -58,11 +115,9 @@ def compute_readability_metrics(text: str) -> Dict[str, Any]:
     asl = total_words / total_sentences
     asw = total_syllables / total_words
 
-    # Flesch Reading Ease = 206.835 - (1.015 * ASL) - (84.6 * ASW)
     fre = 206.835 - (1.015 * asl) - (84.6 * asw)
     fre = max(0.0, min(100.0, round(fre, 1)))
 
-    # Gunning Fog Index = 0.4 * ( (words/sentences) + 100 * (complex_words/words) )
     percent_complex = (complex_words / total_words) * 100.0
     fog = 0.4 * (asl + percent_complex)
     fog = round(fog, 1)
@@ -95,10 +150,10 @@ def check_structural_completeness(text: str) -> List[Dict[str, Any]]:
             issues.append({
                 "category": "structure",
                 "severity": "critical" if sec["name"] in ["Taxonomy / Categorization", "Comparative Analysis"] else "warning",
-                "location": "Overall Document",
+                "location": "LaTeX Document Structure",
                 "title": f"Missing Core Section: {sec['name']}",
-                "description": f"Survey papers require a dedicated {sec['name']} section to synthesize cross-paper patterns rather than isolated summaries.",
-                "suggestion": f"Add a top-level section for '{sec['name']}' to organize the review properly."
+                "description": f"Survey papers require a dedicated {sec['name']} section to synthesize cross-paper patterns (e.g. \\section{{{sec['name']}}}).",
+                "suggestion": f"Add a LaTeX section '\\section{{{sec['name']}}}' to organize the paper."
             })
     return issues
 
@@ -243,12 +298,13 @@ def audit_draft(draft_text: str, source_chunks: List[Dict[str, Any]]) -> Dict[st
     - Source overlap
     """
     readability = compute_readability_metrics(draft_text)
+    latex_syntax_issues = check_latex_syntax(draft_text)
     structural_issues = check_structural_completeness(draft_text)
     citation_issues = check_citation_coverage(draft_text)
     flow_issues = check_logical_flow_and_style(draft_text)
     overlap_summary, overlap_issues = check_source_paper_overlap(draft_text, source_chunks)
 
-    all_issues = structural_issues + citation_issues + flow_issues + overlap_issues
+    all_issues = latex_syntax_issues + structural_issues + citation_issues + flow_issues + overlap_issues
     # Add unique id to each issue
     for i, issue in enumerate(all_issues, 1):
         issue["id"] = f"iss-{i}"
