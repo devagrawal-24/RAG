@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity Paper Studio — The Antigravity of Research Papers</title>
+  <title>Survey Paper AI-Assistant</title>
   <meta name="description" content="Next-generation literature synthesis, structural outline induction, and draft auditor copilot grounded in scientific corpora.">
   
   <!-- Fonts -->
@@ -12,6 +12,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="/static/styles.css">
+  <!-- KaTeX for LaTeX math rendering in the compiled preview pane -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="if(window.renderMathInElement)window.__katexReady=true;"></script>
 </head>
 <body class="light-theme">
   <!-- Top App Navigation -->
@@ -26,7 +31,7 @@
           </svg>
         </div>
         <div class="logo-text">
-          <span class="brand-title">Antigravity<span class="accent-text">Paper</span></span>
+          <span class="brand-title">Survey Paper <span class="accent-text">AI-Assistant</span></span>
           <span class="brand-badge">Research Studio</span>
         </div>
       </div>
@@ -64,7 +69,7 @@
     <section id="viewDashboard" class="view active-view">
       <div class="dashboard-hero">
         <div class="hero-content">
-          <h1>The <span class="accent-text">Antigravity</span> of Research Papers</h1>
+          <h1>The <span class="accent-text">Survey Paper AI-Assistant</span></h1>
           <p>Ground your taxonomy, induce cohesive outlines, synthesize multi-document literature, and audit your drafts with verified page-level provenance.</p>
           <div class="hero-cta">
             <button id="btnNewProjectModal" class="btn btn-primary btn-lg">
@@ -140,7 +145,7 @@
               <div class="studio-toolbar-left">
                 <div class="draft-title-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-                  <input type="text" id="draftDocTitle" value="Survey Paper Draft" placeholder="Document Title" class="draft-title-input" />
+                  <input type="text" id="draftDocTitle" value="survey_paper.tex" placeholder="Document Title (.tex)" class="draft-title-input" />
                 </div>
                 <span id="draftSaveIndicator" class="draft-save-pill"><span class="pulse-dot"></span> Saved</span>
                 <span id="draftWordCountBadge" class="draft-stat-chip">0 words</span>
@@ -150,11 +155,11 @@
               <div class="studio-toolbar-right">
                 <button id="btnInsertOutlineSkeleton" class="btn btn-outline btn-sm" title="Insert sections from Grounded Outline into the editor">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
-                  Insert Outline
+                  Insert LaTeX Outline
                 </button>
                 <button id="btnToggleTerminal" class="btn btn-outline btn-sm" title="Toggle Terminal Output">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-                  Terminal
+                  Terminal & Output
                 </button>
                 <button id="btnCompileDraftReview" class="btn btn-compile btn-sm" title="Compile and Audit Draft for Pedagogical Review (Ctrl+Enter)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -164,12 +169,26 @@
               </div>
             </div>
 
+            <!-- Dedicated LaTeX IDE Editing Toolbar -->
+            <div class="latex-toolbar">
+              <span class="latex-toolbar-label">LaTeX Tools:</span>
+              <button type="button" class="btn-latex-tool" data-latex="section" title="Insert \section{}">\section</button>
+              <button type="button" class="btn-latex-tool" data-latex="subsection" title="Insert \subsection{}">\subsection</button>
+              <button type="button" class="btn-latex-tool" data-latex="textbf" title="Insert \textbf{}">\textbf</button>
+              <button type="button" class="btn-latex-tool" data-latex="textit" title="Insert \textit{}">\textit</button>
+              <button type="button" class="btn-latex-tool" data-latex="itemize" title="Insert itemize list">\begin{itemize}</button>
+              <button type="button" class="btn-latex-tool" data-latex="table" title="Insert LaTeX table">\begin{table}</button>
+              <button type="button" class="btn-latex-tool" data-latex="equation" title="Insert LaTeX equation">\begin{equation}</button>
+              <button type="button" class="btn-latex-tool" data-latex="cite" title="Insert \cite{}">\cite</button>
+              <button type="button" id="btnLoadLatexTemplate" class="btn-latex-tool btn-template" title="Populate complete survey paper LaTeX document template">Load LaTeX Template</button>
+            </div>
+
             <!-- Main Split Workspace: Left Editor + Right Live Co-Pilot -->
             <div class="studio-split-body">
               <!-- Left: Editor Pane -->
               <div class="editor-pane">
                 <div class="editor-gutter" id="editorLineNumbers"><div>1</div></div>
-                <textarea id="draftEditorTextarea" class="editor-textarea" spellcheck="false" placeholder="# Survey Title&#10;&#10;Draft your survey paper here. Use Markdown for sections and citations..."></textarea>
+                <textarea id="draftEditorTextarea" class="editor-textarea" spellcheck="false" placeholder="\documentclass[10pt,a4paper]{article}&#10;\usepackage{amsmath,amssymb}&#10;\begin{document}&#10;\title{Survey Paper Title}&#10;\maketitle&#10;\begin{abstract}&#10;...&#10;\end{abstract}&#10;\section{Introduction}&#10;...&#10;\end{document}"></textarea>
               </div>
 
               <!-- Right: Live AI Co-Pilot Docked Chat -->
@@ -192,14 +211,14 @@
                   <div class="chat-message assistant-message">
                     <div class="message-avatar">✦</div>
                     <div class="message-content">
-                      <p>Welcome! I'm your docked co-pilot. As you draft on the left, ask me for literature citations, taxonomy tables, or methodological trade-offs.</p>
-                      <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Press <strong>"Audit & Compile Draft"</strong> anytime to compile diagnostics into the terminal below.</p>
+                      <p>Welcome! I'm your docked co-pilot. As you draft on the left in LaTeX, ask me for literature citations, taxonomy tables, or LaTeX math equations.</p>
+                      <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Press <strong>"Audit & Compile Draft"</strong> anytime to compile your LaTeX paper and view output diagnostics.</p>
                     </div>
                   </div>
                 </div>
 
                 <form id="dockedChatForm" class="docked-chat-form">
-                  <input type="text" id="dockedChatInput" placeholder="Ask live co-pilot for citations..." autocomplete="off" />
+                  <input type="text" id="dockedChatInput" placeholder="Ask live co-pilot for citations or LaTeX..." autocomplete="off" />
                   <button type="submit" id="btnSendDockedChat" class="btn btn-primary btn-sm">Send</button>
                 </form>
               </div>
@@ -209,7 +228,11 @@
             <div id="studioTerminalDrawer" class="studio-terminal-drawer">
               <div class="terminal-drawer-header">
                 <div class="terminal-tabs">
-                  <button class="terminal-tab-btn active" data-term-tab="termProblems">
+                  <button class="terminal-tab-btn active" data-term-tab="termCompiledOutput">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    COMPILED LATEX PREVIEW
+                  </button>
+                  <button class="terminal-tab-btn" data-term-tab="termProblems">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     PROBLEMS <span id="termProblemsCount" class="terminal-count-badge">0</span>
                   </button>
@@ -230,8 +253,23 @@
               </div>
 
               <div class="terminal-drawer-body">
-                <!-- Tab 1: Problems -->
-                <div id="termProblems" class="term-tab-pane active">
+                <!-- Tab 1: Compiled LaTeX Output Preview -->
+                <div id="termCompiledOutput" class="term-tab-pane active">
+                  <div id="latexCompiledView" class="latex-compiled-view">
+                    <div class="latex-compiled-placeholder">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                      </svg>
+                      <p style="color:#777;margin:0;">Click <strong style="color:#aaa;">"Audit &amp; Compile Draft"</strong> or press <strong style="color:#aaa;">Ctrl+Enter</strong><br>to render your LaTeX paper as a PDF preview.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab 2: Problems -->
+                <div id="termProblems" class="term-tab-pane">
                   <div id="termProblemsList" class="term-problems-list">
                     <div class="term-empty-message">No diagnostics compiled yet. Click <strong>"Audit & Compile Draft"</strong> or press <strong>Ctrl+Enter</strong> to analyze your draft.</div>
                   </div>
@@ -262,7 +300,7 @@
                 <!-- Tab 3: Console Logs -->
                 <div id="termConsole" class="term-tab-pane">
                   <div id="termConsoleOutput" class="term-console-log">
-                    <div class="console-line log-info">[Antigravity Paper Studio Console Ready]</div>
+                    <div class="console-line log-info">[Survey Paper AI-Assistant Studio Console Ready]</div>
                     <div class="console-line log-dim">Press 'Audit & Compile Draft' to run structural, citation, readability, and overlap diagnostics.</div>
                   </div>
                 </div>

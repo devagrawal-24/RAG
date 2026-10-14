@@ -1297,11 +1297,11 @@ body {
   color: #1e1b4b;
 }
 
-.chat-citations {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.chat-citations,
+.citation-card,
+.docked-citations-row,
+.docked-citation-chip {
+  display: none !important;
 }
 
 .citations-label {
@@ -2016,16 +2016,26 @@ body {
 
 .terminal-drawer-body {
   flex: 1;
-  overflow-y: auto;
-  padding: 14px 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .term-tab-pane {
   display: none;
+  flex: 1;
+  overflow: hidden;
 }
 
 .term-tab-pane.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabs that need scrollable padded content (not compiled preview) */
+.term-tab-pane.active:not(#termCompiledOutput) {
+  overflow-y: auto;
+  padding: 14px 18px;
 }
 
 .term-empty-message {
@@ -2168,3 +2178,641 @@ body {
   }
 }
 
+/* ----------------- Document Reference Handler (@-Trigger) Popover ----------------- */
+.mention-popover-menu {
+  position: absolute;
+  z-index: 99999;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.04);
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 8px;
+  font-family: var(--font-sans);
+  transition: opacity 0.15s ease;
+}
+
+.mention-popover-menu.hidden {
+  display: none !important;
+}
+
+.mention-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 8px 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 6px;
+}
+
+.mention-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+}
+
+.mention-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.mention-fallback-hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  padding: 4px 8px 6px 8px;
+  font-weight: 500;
+}
+
+.mention-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mention-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  border: 1px solid transparent;
+}
+
+.mention-item:hover,
+.mention-item.selected {
+  background: rgba(79, 70, 229, 0.07);
+  border-color: rgba(79, 70, 229, 0.2);
+}
+
+.mention-item-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mention-paper-icon {
+  font-size: 13px;
+}
+
+.mention-paper-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-paper-authors {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  padding-left: 20px;
+}
+
+.mention-paper-snippet {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  padding-left: 20px;
+  line-height: 1.35;
+}
+
+.mention-empty-state {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.mention-empty-state p {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.mention-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+
+/* =============================================================================
+   LaTeX Preview Pane — PDF Viewer Style
+   ============================================================================= */
+
+.latex-compiled-view {
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  background: #3a3a3a;
+  display: flex;
+  flex-direction: column;
+}
+
+.latex-compiled-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+  min-height: 160px;
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+  padding: 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* PDF Viewer Toolbar */
+.latex-preview-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.latex-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px;
+  background: #2c2c2c;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 11.5px;
+  color: #d4d4d4;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.latex-preview-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #f0f0f0;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.latex-preview-label svg {
+  opacity: 0.7;
+}
+
+.latex-preview-badge {
+  background: rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
+  padding: 2px 9px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border: 1px solid rgba(99,102,241,0.3);
+}
+
+/* PDF viewer canvas area */
+.latex-preview-paper {
+  flex: 1;
+  overflow: auto;
+  padding: 28px 0 40px;
+  background: #3a3a3a;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /* Custom scrollbar for dark bg */
+  scrollbar-width: thin;
+  scrollbar-color: #555 #3a3a3a;
+}
+
+.latex-preview-paper::-webkit-scrollbar { width: 8px; }
+.latex-preview-paper::-webkit-scrollbar-track { background: #3a3a3a; }
+.latex-preview-paper::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+.latex-preview-paper::-webkit-scrollbar-thumb:hover { background: #777; }
+
+.latex-preview-paper > * {
+  max-width: 820px;
+  width: calc(100% - 48px);
+}
+
+/* Scoped styles for the rendered LaTeX paper — white A4 page */
+#latexRenderedPaper {
+  background: #ffffff;
+  /* A4 proportions: 210mm × 297mm ≈ 1:√2. At 820px wide, height is ~1160px min */
+  padding: 72px 96px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.25),
+    0 8px 40px rgba(0,0,0,0.55),
+    0 2px 8px rgba(0,0,0,0.35);
+  border-radius: 2px;
+  font-family: 'Times New Roman', 'Georgia', 'Computer Modern', serif;
+  font-size: 11.5pt;
+  line-height: 1.65;
+  color: #0a0a0a;
+  min-height: 1060px;
+  /* Isolate from dark parent */
+  isolation: isolate;
+}
+
+#latexRenderedPaper h1.latex-doc-title {
+  font-size: 22pt;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+  line-height: 1.25;
+  color: #000;
+  letter-spacing: -0.3px;
+}
+
+#latexRenderedPaper .latex-doc-author {
+  text-align: center;
+  font-size: 11pt;
+  color: #222;
+  margin-bottom: 2px;
+  line-height: 1.5;
+}
+
+#latexRenderedPaper .latex-doc-date {
+  text-align: center;
+  font-size: 10pt;
+  color: #555;
+  margin-bottom: 28px;
+}
+
+#latexRenderedPaper header.latex-doc-header {
+  text-align: center;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Abstract */
+#latexRenderedPaper .latex-abstract {
+  border-left: 4px solid var(--primary);
+  margin: 24px 40px;
+  padding: 14px 18px;
+  background: rgba(79,70,229,0.04);
+  border-radius: 0 6px 6px 0;
+}
+
+#latexRenderedPaper .latex-abstract h4 {
+  font-size: 10.5pt;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+}
+
+/* Sections */
+#latexRenderedPaper h2.latex-section {
+  font-size: 14pt;
+  font-weight: 700;
+  margin: 28px 0 10px;
+  color: #111;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
+}
+
+#latexRenderedPaper h3.latex-subsection {
+  font-size: 12pt;
+  font-weight: 600;
+  margin: 20px 0 8px;
+  color: #222;
+}
+
+#latexRenderedPaper h4.latex-subsubsection {
+  font-size: 11pt;
+  font-weight: 600;
+  font-style: italic;
+  margin: 14px 0 6px;
+  color: #333;
+}
+
+#latexRenderedPaper h1.latex-chapter {
+  font-size: 18pt;
+  font-weight: 700;
+  margin: 32px 0 14px;
+  color: #0f172a;
+}
+
+/* Paragraphs */
+#latexRenderedPaper p {
+  margin: 0 0 10px;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Lists */
+#latexRenderedPaper ul,
+#latexRenderedPaper ol {
+  margin: 8px 0 14px 22px;
+  padding: 0;
+}
+
+#latexRenderedPaper li {
+  margin-bottom: 4px;
+}
+
+#latexRenderedPaper dl {
+  margin: 8px 0;
+}
+
+#latexRenderedPaper dt {
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+#latexRenderedPaper dd {
+  margin-left: 16px;
+  margin-bottom: 4px;
+}
+
+/* Tables */
+#latexRenderedPaper .latex-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 14px 0;
+  font-size: 8.5pt;
+  table-layout: auto;
+}
+
+#latexRenderedPaper .latex-table td,
+#latexRenderedPaper .latex-table th {
+  border-bottom: 1px solid #ddd;
+  padding: 6px 8px;
+  text-align: left;
+  line-height: 1.35;
+}
+
+#latexRenderedPaper .latex-table th {
+  border-top: 2px solid #111;
+  border-bottom: 2px solid #111;
+  background: #f8fafc;
+  font-weight: 700;
+  color: #111;
+}
+
+#latexRenderedPaper .latex-table tr:last-child td {
+  border-bottom: 2px solid #111;
+}
+
+#latexRenderedPaper .latex-table-float {
+  margin: 22px auto;
+  text-align: center;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+#latexRenderedPaper .latex-keywords {
+  margin: 8px 0 16px;
+  font-size: 10pt;
+  line-height: 1.5;
+}
+
+/* High-Fidelity PDF Page Sheets */
+.latex-pdf-pages-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  padding-bottom: 30px;
+}
+
+.latex-pdf-page-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 820px;
+}
+
+.latex-pdf-page-sheet {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #ffffff;
+  border-radius: 2px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.3),
+    0 8px 32px rgba(0,0,0,0.55),
+    0 2px 8px rgba(0,0,0,0.35);
+}
+
+/* Figures */
+#latexRenderedPaper .latex-figure {
+  margin: 20px auto;
+  text-align: center;
+  max-width: 90%;
+}
+
+#latexRenderedPaper .latex-figure-placeholder {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 32px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  min-width: 180px;
+  min-height: 100px;
+}
+
+/* Caption */
+#latexRenderedPaper .latex-caption {
+  font-size: 9.5pt;
+  color: #555;
+  font-style: italic;
+  margin-top: 6px;
+  display: block;
+}
+
+/* Blockquote / Quote env */
+#latexRenderedPaper .latex-quote {
+  margin: 12px 32px;
+  padding: 10px 16px;
+  border-left: 3px solid #c7d2fe;
+  font-style: italic;
+  color: #555;
+  background: #f8fafc;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Bibliography */
+#latexRenderedPaper .latex-bibliography {
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+#latexRenderedPaper .latex-bibliography h2 {
+  font-size: 13pt;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #111;
+}
+
+#latexRenderedPaper .latex-bibliography ol {
+  list-style: decimal;
+  padding-left: 22px;
+}
+
+#latexRenderedPaper .latex-bibliography li {
+  font-size: 9.5pt;
+  color: #444;
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+#latexRenderedPaper .latex-bib-note {
+  font-size: 10pt;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 12px;
+  background: #fef9c3;
+  border-radius: 4px;
+  border: 1px solid #fde68a;
+}
+
+/* Inline cite / ref */
+#latexRenderedPaper .latex-cite {
+  color: var(--primary);
+  font-size: 9pt;
+  font-weight: 600;
+  vertical-align: super;
+  cursor: default;
+}
+
+#latexRenderedPaper .latex-ref {
+  color: var(--cyan);
+  font-size: 9pt;
+  font-style: italic;
+}
+
+/* Footnotes */
+#latexRenderedPaper .latex-footnote {
+  color: var(--primary);
+  cursor: help;
+  vertical-align: super;
+  font-size: 8pt;
+}
+
+/* Verbatim */
+#latexRenderedPaper .latex-verbatim {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 9.5pt;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+#latexRenderedPaper .latex-inline-verb {
+  background: #f1f5f9;
+  color: #be123c;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5pt;
+}
+
+/* Math (KaTeX will render these) */
+#latexRenderedPaper .math-display {
+  display: block;
+  overflow-x: auto;
+  text-align: center;
+  margin: 14px 0;
+}
+
+#latexRenderedPaper .math-inline {
+  display: inline;
+}
+
+/* Code */
+#latexRenderedPaper code {
+  background: #f1f5f9;
+  color: #be123c;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5pt;
+}
+
+/* Small-caps */
+#latexRenderedPaper [style*="small-caps"] {
+  font-variant: small-caps;
+}
+
+/* =============================================================================
+   LaTeX IDE Toolbar
+   ============================================================================= */
+
+.latex-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.latex-toolbar-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.btn-latex-tool {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn-latex-tool:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.btn-latex-tool.btn-template {
+  background: rgba(79, 70, 229, 0.08);
+  border-color: rgba(79, 70, 229, 0.3);
+  color: var(--primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.btn-latex-tool.btn-template:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}

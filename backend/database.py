@@ -153,7 +153,7 @@ def init_db():
         default_settings = {
             "llm_provider": os.getenv("LLM_PROVIDER", "heuristic"),
             "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
-            "openrouter_model": os.getenv("OPENROUTER_MODEL", "minimax/minimax-m3:free"),
+            "openrouter_model": os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-ultra-550b-a55b:free"),
             "openai_api_key": os.getenv("OPENAI_API_KEY", ""),
             "openai_model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
@@ -302,6 +302,97 @@ def list_papers(project_id: str) -> List[Dict[str, Any]]:
                 d["sections"] = []
         results.append(d)
     return results
+
+def search_papers_for_project(project_id: str, query: str = "") -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    q = (query or "").strip().lower()
+    
+    if not q:
+        rows = conn.execute(
+            "SELECT * FROM papers WHERE project_id = ? ORDER BY created_at DESC", 
+            (project_id,)
+        ).fetchall()
+    else:
+        pattern = f"%{q}%"
+        rows = conn.execute("""
+            SELECT * FROM papers 
+            WHERE project_id = ? AND (
+                LOWER(title) LIKE ? OR 
+                LOWER(authors) LIKE ? OR 
+                LOWER(abstract) LIKE ? OR 
+                LOWER(original_name) LIKE ? OR
+                LOWER(id) LIKE ?
+            )
+            ORDER BY created_at DESC
+        """, (project_id, pattern, pattern, pattern, pattern, pattern)).fetchall()
+
+    summaries = conn.execute(
+        "SELECT * FROM summaries WHERE project_id = ? AND summary_type = 'individual'", 
+        (project_id,)
+    ).fetchall()
+    conn.close()
+
+    summary_map = {}
+    for s in summaries:
+        sd = dict(s)
+        if sd.get("paper_id"):
+            summary_map[sd["paper_id"]] = sd
+
+    results = []
+    for r in rows:
+        d = dict(r)
+        if d.get("sections_json"):
+            try:
+                d["sections"] = json.loads(d["sections_json"])
+            except Exception:
+                d["sections"] = []
+        
+        summ = summary_map.get(d["id"])
+        if summ:
+            key_findings_parts = []
+            if summ.get("problem"):
+                key_findings_parts.append(f"Problem: {summ['problem']}")
+            if summ.get("methodology"):
+                key_findings_parts.append(f"Methodology: {summ['methodology']}")
+            if summ.get("findings"):
+                key_findings_parts.append(f"Findings: {summ['findings']}")
+            if summ.get("limitations"):
+                key_findings_parts.append(f"Limitations: {summ['limitations']}")
+            d["key_findings"] = " | ".join(key_findings_parts)
+            d["problem"] = summ.get("problem", "")
+            d["methodology"] = summ.get("methodology", "")
+            d["findings"] = summ.get("findings", "")
+            d["limitations"] = summ.get("limitations", "")
+        else:
+            d["key_findings"] = d.get("abstract", "")[:300] if d.get("abstract") else ""
+
+        results.append(d)
+    return results
+
+def find_papers_by_mentions(project_id: str, mention_terms: List[str]) -> List[Dict[str, Any]]:
+    all_papers = search_papers_for_project(project_id, "")
+    if not all_papers or not mention_terms:
+        return []
+
+    matched = {}
+    for term in mention_terms:
+        t_clean = term.strip().lower()
+        if not t_clean:
+            continue
+        for p in all_papers:
+            p_id = p["id"].lower()
+            p_title = (p.get("title") or "").lower()
+            p_orig = (p.get("original_name") or "").lower()
+            p_auth = (p.get("authors") or "").lower()
+            
+            # Check if mention term matches ID, title, original_name or substring
+            if (t_clean == p_id or 
+                t_clean in p_title or p_title in t_clean or 
+                t_clean in p_orig or p_orig in t_clean or
+                (len(t_clean) >= 3 and t_clean in p_auth)):
+                matched[p["id"]] = p
+
+    return list(matched.values())
 
 def delete_paper(paper_id: str) -> bool:
     conn = get_db_connection()

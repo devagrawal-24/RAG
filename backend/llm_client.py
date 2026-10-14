@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 from typing import List, Dict, Any, Optional
 
-def call_openrouter(messages: List[Dict[str, str]], api_key: str, model: str = "anthropic/claude-3.5-sonnet", temperature: float = 0.3) -> str:
+def call_openrouter(messages: List[Dict[str, str]], api_key: str, model: str = "nvidia/nemotron-3-ultra-550b-a55b:free", temperature: float = 0.3) -> str:
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -14,7 +14,7 @@ def call_openrouter(messages: List[Dict[str, str]], api_key: str, model: str = "
         "X-Title": "Survey Paper Assistant"
     }
     payload = {
-        "model": model or "anthropic/claude-3.5-sonnet",
+        "model": model or "nvidia/nemotron-3-ultra-550b-a55b:free",
         "messages": messages,
         "temperature": temperature
     }
@@ -23,7 +23,13 @@ def call_openrouter(messages: List[Dict[str, str]], api_key: str, model: str = "
     try:
         with urllib.request.urlopen(req, timeout=45) as response:
             res_data = json.loads(response.read().decode("utf-8"))
-            return res_data["choices"][0]["message"]["content"]
+            if "error" in res_data:
+                err_info = res_data["error"]
+                err_msg = err_info.get("message") if isinstance(err_info, dict) else str(err_info)
+                raise RuntimeError(f"OpenRouter API error: {err_msg}")
+            if "choices" in res_data and len(res_data["choices"]) > 0:
+                return res_data["choices"][0]["message"]["content"]
+            raise RuntimeError(f"OpenRouter unexpected response format: {res_data}")
     except urllib.error.HTTPError as e:
         err_msg = e.read().decode("utf-8")
         raise RuntimeError(f"OpenRouter API error ({e.code}): {err_msg}")

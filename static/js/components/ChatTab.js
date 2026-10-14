@@ -4,6 +4,7 @@ import { escapeHtml, formatMarkdown } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
 import { api } from '../api.js';
 import { store } from '../state.js';
+import { MentionPopover } from './MentionPopover.js';
 
 export class ChatTabComponent {
   constructor() {
@@ -18,6 +19,9 @@ export class ChatTabComponent {
   }
 
   init() {
+    if (this.input) {
+      this.mentionPopover = new MentionPopover(this.input);
+    }
     this.form?.addEventListener('submit', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -69,20 +73,6 @@ export class ChatTabComponent {
     const isAssistant = msg.role === 'assistant';
     div.className = `chat-message ${isAssistant ? 'assistant-message' : 'user-message'}`;
 
-    let citationsHtml = '';
-    if (msg.citations && msg.citations.length > 0) {
-      const cards = msg.citations.map(c => `
-        <div class="citation-card">
-          <div class="citation-header">
-            <span class="citation-title">[${escapeHtml(c.paper_title)}]</span>
-            <span class="citation-meta">p. ${c.page_num || 1} • ${escapeHtml(c.section_title || 'Section')}</span>
-          </div>
-          <div class="citation-quote">"${escapeHtml(c.snippet)}"</div>
-        </div>
-      `).join('');
-      citationsHtml = `<div class="chat-citations"><div class="citations-label">VERIFIABLE LITERATURE GROUNDING:</div>${cards}</div>`;
-    }
-
     div.innerHTML = `
       <div class="message-avatar">
         ${isAssistant ? 
@@ -91,7 +81,6 @@ export class ChatTabComponent {
       </div>
       <div class="message-content">
         ${formatMarkdown(msg.content)}
-        ${citationsHtml}
       </div>
     `;
     this.container.appendChild(div);

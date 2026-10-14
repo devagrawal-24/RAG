@@ -4,9 +4,10 @@ import { escapeHtml, formatDate } from '../utils/formatters.js';
 import { store } from '../state.js';
 
 export class DashboardComponent {
-  constructor({ onSelectProject, onNewProject }) {
+  constructor({ onSelectProject, onNewProject, onDeleteProject }) {
     this.onSelectProject = onSelectProject;
     this.onNewProject = onNewProject;
+    this.onDeleteProject = onDeleteProject;
 
     this.viewDashboard = $('#viewDashboard');
     this.projectListGrid = $('#projectListGrid');
@@ -45,7 +46,12 @@ export class DashboardComponent {
       card.innerHTML = `
         <div class="card-header">
           <h3>${escapeHtml(p.name)}</h3>
-          <span class="badge badge-active">${p.status || 'Active'}</span>
+          <div style="display: flex; align-items: center;">
+            <span class="badge badge-active">${p.status || 'Active'}</span>
+            <button class="btn btn-icon btn-delete-project" data-id="${p.id}" title="Delete Project" style="margin-left: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
         </div>
         <p class="card-topic">${escapeHtml(p.topic || 'No topic specified')}</p>
         <div class="card-stats">
@@ -62,7 +68,15 @@ export class DashboardComponent {
           </div>
         </div>
       `;
-      card.addEventListener('click', () => this.onSelectProject(p.id));
+      card.addEventListener('click', (e) => {
+        const delBtn = e.target.closest('.btn-delete-project');
+        if (delBtn) {
+          e.stopPropagation();
+          if (this.onDeleteProject) this.onDeleteProject(p.id);
+        } else {
+          this.onSelectProject(p.id);
+        }
+      });
       this.projectListGrid.appendChild(card);
     });
   }

@@ -55,7 +55,17 @@ class SurveyApp {
     // 3. Dashboard
     this.dashboard = new DashboardComponent({
       onSelectProject: (id) => this.openProject(id),
-      onNewProject: () => this.modals.open('newProject')
+      onNewProject: () => this.modals.open('newProject'),
+      onDeleteProject: async (id) => {
+        if(confirm('Are you sure you want to delete this project?')) {
+          try {
+            await api.deleteProject(id);
+            this.loadProjects();
+          } catch(err) {
+            console.error(err);
+          }
+        }
+      }
     });
 
     // 4. Tab Components

@@ -29,9 +29,13 @@ export const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }),
+  deleteProject: (id) => request(`/api/projects/${id}`, {
+    method: 'DELETE'
+  }),
 
   // Papers
   getPapers: (projectId) => request(`/api/projects/${projectId}/papers`),
+  searchPapers: (projectId, q = '') => request(`/api/projects/${projectId}/papers/search?q=${encodeURIComponent(q)}`),
   uploadPapers: (projectId, formData) => request(`/api/projects/${projectId}/papers`, {
     method: 'POST',
     body: formData
@@ -69,6 +73,11 @@ export const api = {
   submitDraft: (projectId, formData) => request(`/api/projects/${projectId}/review`, {
     method: 'POST',
     body: formData
+  }),
+  compileDraft: (projectId, latex_source, title) => request(`/api/projects/${projectId}/draft/compile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latex_source, title })
   }),
   getDraft: (projectId) => request(`/api/projects/${projectId}/draft`),
   saveDraft: (projectId, data) => request(`/api/projects/${projectId}/draft`, {

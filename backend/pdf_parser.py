@@ -72,7 +72,7 @@ def parse_pdf(file_path: str) -> Dict[str, Any]:
         raise ValueError("The uploaded PDF has 0 pages.")
 
     warnings = []
-    if page_count > 40:
+    if page_count > 50:
         warnings.append(f"Document has {page_count} pages; this is unusually long for a standard conference/journal paper (may be a thesis or book).")
 
     full_text_pages = []
