@@ -74,11 +74,20 @@ export const api = {
     method: 'POST',
     body: formData
   }),
-  compileDraft: (projectId, latex_source, title) => request(`/api/projects/${projectId}/draft/compile`, {
+  compileDraft: (projectId, latex_source, title, bib = '', paper_size = 'letter', signal = null) => request(`/api/projects/${projectId}/draft/compile`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ latex_source, title })
+    body: JSON.stringify({ latex_source, title, bib, paper_size }),
+    signal
   }),
+  compileDirect: (tex, bib = '', paper = 'letter', signal = null) => request(`/api/compile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tex, bib, options: { paper } }),
+    signal
+  }),
+  getCompileHealth: () => request(`/api/compile/health`),
+  getProjectBibtex: (projectId) => request(`/api/projects/${projectId}/references.bib`),
   getDraft: (projectId) => request(`/api/projects/${projectId}/draft`),
   saveDraft: (projectId, data) => request(`/api/projects/${projectId}/draft`, {
     method: 'PUT',

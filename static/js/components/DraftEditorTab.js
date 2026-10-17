@@ -1,408 +1,533 @@
-// DraftEditorTab.js — LaTeX Draft Studio IDE
+// DraftEditorTab.js — IEEE LaTeX Draft Studio IDE
 // Features:
-//   • Monaco-style line-number gutter  
-//   • Full LaTeX toolbar (snippets, template loader)
-//   • "Audit & Compile Draft" → calls /draft/compile, renders HTML preview in terminal
-//   • Bottom diagnostics terminal: Compiled Preview | Problems | Metrics | Console
-//   • Side-docked AI Co-Pilot with @-mention support
+//   • Real IEEEtran LaTeX Editor powered by CodeMirror 5
+//   • Dual-column PDF rendering via pdf.js + PyMuPDF fallback
+//   • Pre-compile client diagnostics + Real backend LaTeX build
+//   • Collapsible Bottom VS Code Drawer: Problems | Log | Audit & Health
+//   • Word & character counter excluding syntax and math
+//   • Automatic Markdown detection & one-click lossless conversion
+//   • Debounced autosave (800ms) with status cycling and version history
+//   • BibTeX integration from Literature Papers with autocomplete
+//   • Resizable split pane with persistence and keyboard shortcuts
 
 import { $, $$ } from '../utils/dom.js';
-import { escapeHtml, formatMarkdown } from '../utils/formatters.js';
+import { escapeHtml } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
 import { api } from '../api.js';
 import { store } from '../state.js';
-import { MentionPopover } from './MentionPopover.js';
 
-// ---------------------------------------------------------------------------
-// LaTeX snippet library
-// ---------------------------------------------------------------------------
-const LATEX_SNIPPETS = {
-  section:     '\\section{Section Title}\n',
-  subsection:  '\\subsection{Subsection Title}\n',
-  subsubsection: '\\subsubsection{Sub-subsection Title}\n',
-  textbf:      '\\textbf{bold text}',
-  textit:      '\\textit{italic text}',
-  emph:        '\\emph{emphasized text}',
-  texttt:      '\\texttt{code or monospace}',
-  underline:   '\\underline{underlined text}',
-  itemize: (
-    '\\begin{itemize}\n' +
-    '  \\item First item\n' +
-    '  \\item Second item\n' +
-    '  \\item Third item\n' +
-    '\\end{itemize}\n'
-  ),
-  enumerate: (
-    '\\begin{enumerate}\n' +
-    '  \\item First item\n' +
-    '  \\item Second item\n' +
-    '  \\item Third item\n' +
-    '\\end{enumerate}\n'
-  ),
-  table: (
-    '\\begin{table}[h]\n' +
-    '  \\centering\n' +
-    '  \\caption{Table Caption}\n' +
-    '  \\label{tab:label}\n' +
-    '  \\begin{tabular}{|l|c|r|}\n' +
-    '    \\hline\n' +
-    '    Column 1 & Column 2 & Column 3 \\\\\\\\\n' +
-    '    \\hline\n' +
-    '    Row 1    & Value    & Value    \\\\\\\\\n' +
-    '    Row 2    & Value    & Value    \\\\\\\\\n' +
-    '    \\hline\n' +
-    '  \\end{tabular}\n' +
-    '\\end{table}\n'
-  ),
-  equation: (
-    '\\begin{equation}\n' +
-    '  \\label{eq:label}\n' +
-    '  f(x) = \\sum_{i=0}^{n} a_i x^i\n' +
-    '\\end{equation}\n'
-  ),
-  align: (
-    '\\begin{align}\n' +
-    '  a &= b + c \\\\\\\\\n' +
-    '  d &= e + f\n' +
-    '\\end{align}\n'
-  ),
-  cite:    '\\cite{key}',
-  ref:     '\\ref{label}',
-  label:   '\\label{sec:label}',
-  figure: (
-    '\\begin{figure}[h]\n' +
-    '  \\centering\n' +
-    '  \\includegraphics[width=0.8\\textwidth]{figure.png}\n' +
-    '  \\caption{Figure Caption}\n' +
-    '  \\label{fig:label}\n' +
-    '\\end{figure}\n'
-  ),
-  abstract: (
-    '\\begin{abstract}\n' +
-    '  Your abstract goes here. Summarize the paper\'s motivation, methodology, and contributions.\n' +
-    '\\end{abstract}\n'
-  ),
-};
+import { DraftCodeMirrorEditor } from '../draft/editor.js';
+import { CompileManager } from '../draft/compile.js';
+import { AutoSaveManager } from '../draft/autosave.js';
+import { runClientPreCompileAudit } from '../draft/diagnostics.js';
+import { isMarkdownContent, convertMarkdownToLatex } from '../draft/markdown.js';
+import { IEEE_FULL_TEMPLATE, generateIeeeOutline } from '../draft/templates.js';
+import { calculateLatexCounts } from '../draft/counts.js';
+import { generateBibtexFromPapers, extractBibKeys } from '../draft/bib.js';
+import { exportProjectDossier } from '../draft/export.js';
 
-const LATEX_FULL_TEMPLATE = `\\documentclass[10pt,a4paper]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
-\\usepackage{amsmath,amssymb,amsfonts}
-\\usepackage{graphicx}
-\\usepackage{hyperref}
-\\usepackage{cite}
-\\usepackage{geometry}
-\\geometry{margin=1in}
-\\usepackage{booktabs}
-\\usepackage{enumitem}
-
-\\title{Survey Title: A Comprehensive Review of [Topic]}
-\\author{Author Name\\\\
-  \\textit{Institution / Department}\\\\
-  \\texttt{author@email.com}}
-\\date{\\today}
-
-\\begin{document}
-
-\\maketitle
-
-\\begin{abstract}
-This paper presents a comprehensive survey of [topic]. We analyze [N] peer-reviewed works spanning [year range], synthesizing methodological advances, empirical benchmarks, and open research challenges. Our taxonomy organizes existing approaches into [X] major categories and identifies [key gap] as a priority for future investigation.
-\\end{abstract}
-
-\\section{Introduction}
-The field of [topic] has grown significantly since [year]. Motivated by [challenge], researchers have proposed numerous approaches to address [problem]. This survey provides a structured synthesis of the current state-of-the-art, with the following contributions:
-
-\\begin{enumerate}
-  \\item A taxonomy of existing approaches across [X] dimensions.
-  \\item A comparative analysis of empirical results on benchmark datasets.
-  \\item An identification of open challenges and future directions.
-\\end{enumerate}
-
-\\section{Background and Related Work}
-\\subsection{Foundational Concepts}
-[Introduce key background concepts and terminology here.]
-
-\\subsection{Prior Surveys}
-Several surveys have addressed related aspects of this domain \\cite{ref1, ref2}. However, [gap this paper fills].
-
-\\section{Taxonomy and Methodology Classification}
-\\subsection{Category 1: [Name]}
-[Description of category 1 approaches and representative papers.]
-
-\\subsection{Category 2: [Name]}
-[Description of category 2 approaches and representative papers.]
-
-\\section{Comparative Analysis}
-\\begin{table}[h]
-  \\centering
-  \\caption{Comparison of representative approaches across key metrics.}
-  \\label{tab:comparison}
-  \\begin{tabular}{|l|c|c|c|}
-    \\hline
-    Method & Metric 1 & Metric 2 & Complexity \\\\
-    \\hline
-    Method A \\cite{ref1} & 0.92 & 0.87 & $O(n)$ \\\\
-    Method B \\cite{ref2} & 0.89 & 0.91 & $O(n \\log n)$ \\\\
-    Method C \\cite{ref3} & 0.95 & 0.88 & $O(n^2)$ \\\\
-    \\hline
-  \\end{tabular}
-\\end{table}
-
-\\section{Open Challenges and Future Directions}
-Despite significant progress, several challenges remain unresolved:
-
-\\begin{itemize}
-  \\item \\textbf{Challenge 1:} [Description and why it matters.]
-  \\item \\textbf{Challenge 2:} [Description and why it matters.]
-  \\item \\textbf{Challenge 3:} [Description and why it matters.]
-\\end{itemize}
-
-Future research directions include [directions].
-
-\\section{Conclusion}
-This survey systematically reviewed [topic], covering [N] papers from [year range]. We presented a taxonomy of [X] categories, a comparative benchmark analysis, and highlighted open challenges. We hope this synthesis provides a useful foundation for both newcomers and experienced practitioners advancing the field.
-
-\\begin{thebibliography}{99}
-  \\bibitem{ref1} Author A, Author B. \\textit{Title of Paper One}. In: \\textit{Conference Name}, 2023.
-  \\bibitem{ref2} Author C. \\textit{Title of Paper Two}. \\textit{Journal Name}, vol. 10, pp. 1--15, 2022.
-  \\bibitem{ref3} Author D, Author E, Author F. \\textit{Title of Paper Three}. arXiv preprint arXiv:XXXX.XXXXX, 2024.
-\\end{thebibliography}
-
-\\end{document}
-`;
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 export class DraftEditorTabComponent {
-  constructor({ onDraftAudited }) {
-    this.onDraftAudited = onDraftAudited;
+  constructor(options = {}) {
+    this.onDraftAudited = options.onDraftAudited;
 
-    // Editor elements
-    this.textarea   = $('#draftEditorTextarea');
-    this.gutter     = $('#editorLineNumbers');
+    // Elements
+    this.cmContainer = $('#codeMirrorContainer');
     this.titleInput = $('#draftDocTitle');
-    this.saveIndicator  = $('#draftSaveIndicator');
+    this.saveIndicator = $('#draftSaveIndicator');
     this.wordCountBadge = $('#draftWordCountBadge');
     this.charCountBadge = $('#draftCharCountBadge');
+    this.bibChip = $('#draftBibChip');
+    this.compileStatusChip = $('#draftCompileStatusChip');
+    this.paperDocClassSelect = $('#draftPaperDocClass');
+    this.paperSizeSelect = $('#draftPaperSize');
     this.btnInsertOutline = $('#btnInsertOutlineSkeleton');
-    this.btnCompile       = $('#btnCompileDraftReview');
+    this.btnCompile = $('#btnCompileDraftReview');
     this.btnToggleTerminal = $('#btnToggleTerminal');
-    this.btnLoadTemplate   = $('#btnLoadLatexTemplate');
+    this.btnLoadTemplate = $('#btnLoadLatexTemplate');
+    this.btnConvertToolbar = $('#btnConvertMarkdownToolbar');
 
-    // Terminal Drawer elements
-    this.terminalDrawer      = $('#studioTerminalDrawer');
-    this.terminalTabs        = $$('.terminal-tab-btn');
-    this.terminalPanes       = $$('.term-tab-pane');
-    this.termProblemsCount   = $('#termProblemsCount');
+    // Split & Resizer
+    this.splitBody = $('#studioSplitBody');
+    this.splitResizer = $('#studioSplitResizer');
+    this.editorPane = $('#editorSplitPane');
+    this.previewPane = $('#previewSplitPane');
+
+    // Markdown Banner
+    this.markdownBanner = $('#draftMarkdownBanner');
+    this.btnConvertBanner = $('#btnConvertBannerAction');
+    this.btnCompileAnyway = $('#btnCompileAnywayBannerAction');
+    this.btnDismissBanner = $('#btnDismissBannerAction');
+
+    // Preview Controls
+    this.compiledView = $('#latexCompiledView');
+    this.btnZoomIn = $('#btnPdfZoomIn');
+    this.btnZoomOut = $('#btnPdfZoomOut');
+    this.zoomLabel = $('#pdfZoomLabel');
+    this.btnDownloadPdf = $('#btnDownloadPdf');
+    this.pdfStandardLabel = $('#pdfStandardLabel');
+
+    // Terminal Drawer
+    this.terminalDrawer = $('#studioTerminalDrawer');
+    this.terminalTabs = $$('.terminal-tab-btn');
+    this.termProblemsCount = $('#termProblemsCount');
     this.termHealthScoreBadge = $('#termHealthScoreBadge');
-    this.termProblemsList    = $('#termProblemsList');
-    this.termMetricHealth    = $('#termMetricHealth');
-    this.termMetricFRE       = $('#termMetricFRE');
-    this.termMetricFog       = $('#termMetricFog');
-    this.termMetricOverlap   = $('#termMetricOverlap');
-    this.termConsoleOutput   = $('#termConsoleOutput');
-    this.termCompiledView    = $('#latexCompiledView');
+    this.termProblemsList = $('#termProblemsList');
+    this.termLogOutput = $('#termLogOutput');
+    this.termMetricHealth = $('#termMetricHealth');
+    this.termMetricFRE = $('#termMetricFRE');
+    this.termMetricFog = $('#termMetricFog');
+    this.termMetricOverlap = $('#termMetricOverlap');
     this.btnMinimizeTerminal = $('#btnMinimizeTerminal');
 
-    // Docked Live Chat elements
-    this.dockedChatMessages = $('#dockedChatMessages');
-    this.dockedChatForm     = $('#dockedChatForm');
-    this.dockedChatInput    = $('#dockedChatInput');
-    this.dockedChips        = $$('.docked-chip');
+    // Status Bar
+    this.statusCursorPos = $('#editorCursorPosition');
+    this.statusSelLength = $('#editorSelectionLength');
+    this.btnToggleWrap = $('#btnToggleWordWrap');
+    this.btnHistory = $('#btnVersionHistory');
+    this.btnShortcuts = $('#btnEditorShortcutsHelp');
 
-    this.saveTimer = null;
-    this.isCompiling = false;
-    this.isWaitingResponse = false;
+    // Internal state
+    this.currentProject = null;
+    this.bibContent = '';
+    this.availableBibKeys = [];
+    this.currentErrors = [];
+    this.autoCompileTimer = null;
+    this.isAutoCompileEnabled = false;
+
+    // Sub-controllers
+    this.autosave = new AutoSaveManager({
+      saveIndicator: this.saveIndicator,
+      debounceMs: 800,
+      onSave: () => this.executeSave()
+    });
+
+    this.compiler = new CompileManager({
+      previewContainer: this.compiledView,
+      compileBtn: this.btnCompile,
+      compileStatusChip: this.compileStatusChip,
+      onLog: (msg) => this.logToTerminal(msg)
+    });
 
     this.init();
   }
 
   init() {
-    this.setupEditorEvents();
-    this.setupLatexToolbar();
+    this.initEditor();
+    this.setupSplitResizer();
+    this.setupToolbarActions();
     this.setupTerminalEvents();
-    this.setupDockedChat();
+    this.setupPdfControls();
+    this.setupMarkdownBannerEvents();
+    this.setupStatusBarEvents();
+    this.setupExportListener();
 
+    // Subscribe to store updates
     store.subscribe('currentProject', (project) => {
-      if (project) this.loadProjectDraft(project.id);
+      if (project && (!this.currentProject || this.currentProject.id !== project.id)) {
+        this.currentProject = project;
+        this.autosave.setProjectId(project.id);
+        this.loadProjectDraft(project.id);
+        this.syncProjectBibtex(project.id);
+      }
     });
 
-    store.subscribe('chatMessages', (messages) => {
-      if (!this.isWaitingResponse) {
-        this.renderDockedChat(messages || []);
+    store.subscribe('papers', (papers) => {
+      if (this.currentProject) {
+        this.syncProjectBibtex(this.currentProject.id, papers);
       }
     });
   }
 
-  // =========================================================================
-  // Editor events
-  // =========================================================================
-  setupEditorEvents() {
-    if (!this.textarea) return;
-
-    this.textarea.addEventListener('input', () => {
-      this.updateGutter();
-      this.updateWordStats();
-      this.queueAutoSave();
-    });
-
-    this.textarea.addEventListener('scroll', () => {
-      if (this.gutter) this.gutter.scrollTop = this.textarea.scrollTop;
-    });
-
-    this.textarea.addEventListener('keydown', (e) => {
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const start = this.textarea.selectionStart;
-        const end   = this.textarea.selectionEnd;
-        this.textarea.value =
-          this.textarea.value.substring(0, start) + '  ' +
-          this.textarea.value.substring(end);
-        this.textarea.selectionStart = this.textarea.selectionEnd = start + 2;
-        this.updateGutter();
-        this.queueAutoSave();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        this.compileAndAudit();
-      } else if (e.key === 'Backslash' || e.key === '\\') {
-        // Show autocomplete hint in future — for now just pass through
+  initEditor() {
+    if (!this.cmContainer) return;
+    this.editor = new DraftCodeMirrorEditor(this.cmContainer, {
+      initialValue: '',
+      onCompile: () => this.compileDraft(),
+      onSave: () => this.autosave.triggerSave(true),
+      onChange: (val) => {
+        this.updateCounts(val);
+        this.autosave.markChanged();
+        this.checkMarkdownDetection(val);
+        if (this.isAutoCompileEnabled) {
+          clearTimeout(this.autoCompileTimer);
+          this.autoCompileTimer = setTimeout(() => this.compileDraft(true), 2000);
+        }
+      },
+      onCursor: (pos) => {
+        if (this.statusCursorPos) {
+          this.statusCursorPos.textContent = `Ln ${pos.line}, Col ${pos.ch}`;
+        }
+        if (this.statusSelLength) {
+          if (pos.selectionLength > 0) {
+            this.statusSelLength.textContent = `${pos.selectionLength} sel`;
+            this.statusSelLength.classList.remove('hidden');
+          } else {
+            this.statusSelLength.classList.add('hidden');
+          }
+        }
       }
-    });
-
-    this.titleInput?.addEventListener('input', () => this.queueAutoSave());
-
-    this.btnInsertOutline?.addEventListener('click', (e) => {
-      e?.preventDefault();
-      this.insertLatexOutlineSkeleton();
-    });
-
-    this.btnCompile?.addEventListener('click', (e) => {
-      e?.preventDefault();
-      this.compileAndAudit();
-    });
-
-    this.btnToggleTerminal?.addEventListener('click', (e) => {
-      e?.preventDefault();
-      this.terminalDrawer?.classList.toggle('hidden');
     });
   }
 
-  // =========================================================================
-  // LaTeX toolbar
-  // =========================================================================
-  setupLatexToolbar() {
-    // Snippet buttons (data-latex attribute)
-    $$('.btn-latex-tool[data-latex]').forEach(btn => {
+  setupSplitResizer() {
+    if (!this.splitResizer || !this.splitBody) return;
+
+    let isDragging = false;
+
+    // Restore saved width from localStorage
+    const savedPct = localStorage.getItem('survey_split_pct');
+    if (savedPct && this.editorPane && this.previewPane) {
+      this.editorPane.style.flex = `0 0 ${savedPct}%`;
+      this.previewPane.style.flex = `0 0 ${100 - parseFloat(savedPct)}%`;
+    }
+
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      const rect = this.splitBody.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const pct = Math.max(25, Math.min(75, (offsetX / rect.width) * 100));
+      this.editorPane.style.flex = `0 0 ${pct}%`;
+      this.previewPane.style.flex = `0 0 ${100 - pct}%`;
+      localStorage.setItem('survey_split_pct', pct.toFixed(1));
+    };
+
+    const onMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        this.splitResizer.classList.remove('resizing');
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        if (this.editor && this.editor.cm) {
+          this.editor.cm.refresh();
+        }
+      }
+    };
+
+    this.splitResizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      isDragging = true;
+      this.splitResizer.classList.add('resizing');
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+
+    this.splitResizer.addEventListener('dblclick', () => {
+      this.editorPane.style.flex = '1 1 50%';
+      this.previewPane.style.flex = '1 1 50%';
+      localStorage.removeItem('survey_split_pct');
+      if (this.editor && this.editor.cm) this.editor.cm.refresh();
+    });
+  }
+
+  setupToolbarActions() {
+    // Snippet buttons
+    $$('.btn-latex-tool[data-latex]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        const key = btn.dataset.latex;
-        const snippet = LATEX_SNIPPETS[key];
-        if (snippet) this.insertSnippet(snippet);
+        const snippet = btn.getAttribute('data-latex');
+        if (snippet && this.editor) {
+          this.editor.insertSnippet(snippet);
+        }
       });
     });
 
     // Load full template
-    this.btnLoadTemplate?.addEventListener('click', (e) => {
-      e.preventDefault();
-      const hasContent = this.textarea?.value?.trim();
-      if (hasContent && !confirm('Load the full LaTeX survey template? Your current content will be replaced.')) {
-        return;
+    this.btnLoadTemplate?.addEventListener('click', () => {
+      if (this.editor.getValue().trim().length > 0) {
+        if (!confirm('Replace current document with the full IEEEtran survey paper template?')) {
+          return;
+        }
       }
-      if (this.textarea) {
-        this.textarea.value = LATEX_FULL_TEMPLATE;
-        this.updateGutter();
-        this.updateWordStats();
-        this.queueAutoSave();
-        showToast('LaTeX survey template loaded!', 'success');
+      this.editor.setValue(IEEE_FULL_TEMPLATE);
+      this.editor.cm.focus();
+      showToast('Loaded IEEEtran LaTeX template', 'success');
+      this.compileDraft();
+    });
+
+    // Insert Outline
+    this.btnInsertOutline?.addEventListener('click', () => {
+      const outline = store.getState('outline');
+      const proj = this.currentProject || { name: 'Survey Paper', topic: 'Literature Review' };
+      const generated = generateIeeeOutline(proj.name, proj.topic, outline?.sections || []);
+
+      const currentVal = this.editor.getValue().trim();
+      if (currentVal.length > 0) {
+        const choice = prompt('Draft has content.\nType: "replace" to overwrite, "append" to append at cursor, or Cancel to abort.');
+        if (!choice) return;
+        if (choice.toLowerCase() === 'replace') {
+          this.editor.setValue(generated);
+        } else if (choice.toLowerCase() === 'append') {
+          this.editor.cm.replaceSelection('\n' + generated + '\n');
+        } else {
+          return;
+        }
+      } else {
+        this.editor.setValue(generated);
       }
+      showToast('Inserted IEEE outline skeleton', 'success');
+    });
+
+    // Convert Markdown Toolbar button
+    this.btnConvertToolbar?.addEventListener('click', () => {
+      this.convertCurrentMarkdown();
+    });
+
+    // Compile Button
+    this.btnCompile?.addEventListener('click', () => {
+      this.compileDraft();
+    });
+
+    // Terminal Drawer Button
+    this.btnToggleTerminal?.addEventListener('click', () => {
+      this.terminalDrawer?.classList.toggle('hidden');
+    });
+
+    // Paper size change
+    this.paperSizeSelect?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (this.pdfStandardLabel) {
+        this.pdfStandardLabel.textContent = val === 'a4' ? 'IEEE STANDARD A4' : 'IEEE STANDARD US LETTER';
+      }
+    });
+
+    // Document class option
+    this.paperDocClassSelect?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      const current = this.editor.getValue();
+      if (current.includes('\\documentclass')) {
+        const updated = current.replace(/\\documentclass(?:\[[^\]]*\])?\{IEEEtran\}/, `\\documentclass[${val}]{IEEEtran}`);
+        this.editor.setValue(updated);
+      }
+    });
+
+    // Bib chip preview
+    this.bibChip?.addEventListener('click', () => {
+      this.showBibtexPreviewModal();
     });
   }
 
-  insertSnippet(snippet) {
-    if (!this.textarea) return;
-    const start = this.textarea.selectionStart;
-    const end   = this.textarea.selectionEnd;
-    const before = this.textarea.value.substring(0, start);
-    const after  = this.textarea.value.substring(end);
-    this.textarea.value = before + snippet + after;
-    const newPos = start + snippet.length;
-    this.textarea.selectionStart = this.textarea.selectionEnd = newPos;
-    this.textarea.focus();
-    this.updateGutter();
-    this.updateWordStats();
-    this.queueAutoSave();
+  setupMarkdownBannerEvents() {
+    this.btnConvertBanner?.addEventListener('click', () => {
+      this.convertCurrentMarkdown();
+      this.markdownBanner?.classList.add('hidden');
+    });
+
+    this.btnCompileAnyway?.addEventListener('click', () => {
+      this.markdownBanner?.classList.add('hidden');
+      this.compileDraft(false, true);
+    });
+
+    this.btnDismissBanner?.addEventListener('click', () => {
+      this.markdownBanner?.classList.add('hidden');
+    });
   }
 
-  // =========================================================================
-  // Terminal tab events
-  // =========================================================================
+  checkMarkdownDetection(content) {
+    if (isMarkdownContent(content)) {
+      this.markdownBanner?.classList.remove('hidden');
+    } else {
+      this.markdownBanner?.classList.add('hidden');
+    }
+  }
+
+  convertCurrentMarkdown() {
+    if (!this.editor) return;
+    const current = this.editor.getValue();
+    if (!isMarkdownContent(current)) {
+      showToast('Document is already in LaTeX format.', 'info');
+      return;
+    }
+
+    const proj = this.currentProject || { name: 'Survey Paper', topic: 'Literature Review' };
+    const converted = convertMarkdownToLatex(current, proj);
+
+    // Apply as single operation for undo
+    this.editor.cm.operation(() => {
+      this.editor.cm.setValue(converted);
+    });
+
+    this.markdownBanner?.classList.add('hidden');
+    showToast('Converted Markdown to IEEE LaTeX! (Ctrl+Z to undo)', 'success');
+    this.compileDraft();
+  }
+
   setupTerminalEvents() {
-    this.terminalTabs.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e?.preventDefault();
-        this.terminalTabs.forEach(b => b.classList.remove('active'));
-        this.terminalPanes.forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        const paneId = btn.dataset.termTab;
-        $(`#${paneId}`)?.classList.add('active');
+    this.terminalTabs.forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetTab = tab.getAttribute('data-term-tab');
+        this.switchTerminalTab(targetTab);
       });
     });
 
-    this.btnMinimizeTerminal?.addEventListener('click', (e) => {
-      e?.preventDefault();
+    this.btnMinimizeTerminal?.addEventListener('click', () => {
       this.terminalDrawer?.classList.add('hidden');
     });
   }
 
-  // =========================================================================
-  // Gutter & stats
-  // =========================================================================
-  updateGutter() {
-    if (!this.textarea || !this.gutter) return;
-    const lines = this.textarea.value.split('\n').length;
-    let html = '';
-    for (let i = 1; i <= lines; i++) html += `<div>${i}</div>`;
-    this.gutter.innerHTML = html;
-  }
-
-  updateWordStats() {
-    const text  = this.textarea?.value || '';
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const chars = text.length;
-    const readMins = Math.max(1, Math.ceil(words / 200));
-    if (this.wordCountBadge)
-      this.wordCountBadge.textContent = `${words} words (~${readMins} min read)`;
-    if (this.charCountBadge)
-      this.charCountBadge.textContent = `${chars} chars`;
-  }
-
-  // =========================================================================
-  // Auto-save
-  // =========================================================================
-  queueAutoSave() {
-    if (this.saveIndicator) {
-      this.saveIndicator.innerHTML = `<span class="spin-dot"></span> Saving...`;
-      this.saveIndicator.classList.add('saving');
-    }
-    clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(() => this.saveDraft(), 1200);
-  }
-
-  async saveDraft() {
-    const project = store.getState('currentProject');
-    if (!project) return;
-    const title   = this.titleInput?.value?.trim() || 'survey_paper.tex';
-    const content = this.textarea?.value || '';
-    try {
-      await api.saveDraft(project.id, { title, content });
-      if (this.saveIndicator) {
-        this.saveIndicator.innerHTML = `<span class="pulse-dot"></span> Saved`;
-        this.saveIndicator.classList.remove('saving');
+  switchTerminalTab(tabId) {
+    this.terminalTabs.forEach((t) => {
+      if (t.getAttribute('data-term-tab') === tabId) {
+        t.classList.add('active');
+      } else {
+        t.classList.remove('active');
       }
-    } catch (err) {
-      if (this.saveIndicator) this.saveIndicator.innerHTML = `⚠️ Save error`;
+    });
+
+    const panes = {
+      termProblems: $('#termProblems'),
+      termLog: $('#termLog'),
+      termAudit: $('#termAudit')
+    };
+
+    Object.entries(panes).forEach(([id, pane]) => {
+      if (pane) {
+        pane.style.display = id === tabId ? 'block' : 'none';
+      }
+    });
+  }
+
+  setupPdfControls() {
+    this.btnZoomIn?.addEventListener('click', () => {
+      this.compiler.zoomIn();
+      if (this.zoomLabel) {
+        this.zoomLabel.textContent = `${Math.round(this.compiler.zoomScale * 100)}%`;
+      }
+    });
+
+    this.btnZoomOut?.addEventListener('click', () => {
+      this.compiler.zoomOut();
+      if (this.zoomLabel) {
+        this.zoomLabel.textContent = `${Math.round(this.compiler.zoomScale * 100)}%`;
+      }
+    });
+
+    this.btnDownloadPdf?.addEventListener('click', () => {
+      if (this.compiler.lastSuccessfulPdfData) {
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${this.compiler.lastSuccessfulPdfData}`;
+        link.download = `${this.titleInput?.value?.replace('.tex', '') || 'main'}.pdf`;
+        link.click();
+      } else {
+        showToast('No compiled PDF available yet. Click "Audit & Compile Draft" first.', 'warning');
+      }
+    });
+  }
+
+  setupStatusBarEvents() {
+    this.btnToggleWrap?.addEventListener('click', () => {
+      if (this.editor && this.editor.cm) {
+        const wrap = !this.editor.cm.getOption('lineWrapping');
+        this.editor.cm.setOption('lineWrapping', wrap);
+        this.btnToggleWrap.textContent = `Wrap: ${wrap ? 'On' : 'Off'}`;
+      }
+    });
+
+    this.btnHistory?.addEventListener('click', () => {
+      if (!this.currentProject) return;
+      const history = this.autosave.getHistory(this.currentProject.id);
+      if (history.length === 0) {
+        showToast('No previous autosaves found for this project.', 'info');
+        return;
+      }
+
+      const listStr = history.map((h, i) => `${i + 1}. ${h.timeLabel} (${h.content.length} chars)`).join('\n');
+      const pick = prompt(`Version History (Autosaves):\n${listStr}\n\nEnter number (1-${history.length}) to restore:`);
+      if (pick) {
+        const idx = parseInt(pick, 10) - 1;
+        if (history[idx]) {
+          this.editor.setValue(history[idx].content);
+          showToast(`Restored snapshot from ${history[idx].timeLabel}`, 'success');
+        }
+      }
+    });
+
+    this.btnShortcuts?.addEventListener('click', () => {
+      alert(
+        'LaTeX Studio Keyboard Shortcuts:\n\n' +
+        '• Ctrl+Enter: Audit & Compile Draft\n' +
+        '• Ctrl+S: Save Draft\n' +
+        '• Ctrl+Space: Autocomplete (LaTeX commands & \\cite keys)\n' +
+        '• Tab: Indent / 2 spaces\n' +
+        '• Ctrl+Z / Ctrl+Y: Undo / Redo\n' +
+        '• Click a Problem to jump directly to the line'
+      );
+    });
+  }
+
+  setupExportListener() {
+    const exportBtn = $('#btnExportProject');
+    exportBtn?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!this.currentProject) return;
+
+      const tex = this.editor ? this.editor.getValue() : '';
+      const bib = this.bibContent;
+      const pdf = this.compiler.lastSuccessfulPdfData;
+
+      showToast('Packaging Survey Dossier zip…', 'info');
+      await exportProjectDossier(this.currentProject, tex, bib, pdf);
+      showToast('Export Dossier downloaded!', 'success');
+    });
+  }
+
+  async syncProjectBibtex(projectId, papersList = null) {
+    try {
+      const papers = papersList || (await api.getPapers(projectId)) || [];
+      this.bibContent = generateBibtexFromPapers(papers);
+      this.availableBibKeys = extractBibKeys(this.bibContent);
+
+      if (this.bibChip) {
+        this.bibChip.textContent = `references.bib · ${papers.length} entries`;
+      }
+
+      if (this.editor) {
+        this.editor.setBibPapers(papers);
+      }
+    } catch (e) {
+      console.warn('Could not sync bibtex', e);
+    }
+  }
+
+  showBibtexPreviewModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+      <div class="modal-card" style="max-width: 650px;">
+        <div class="modal-header">
+          <h3>references.bib Preview</h3>
+          <button type="button" class="btn-icon" id="btnCloseBibModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Auto-generated from your Literature Papers list. Used during LaTeX compilation.</p>
+          <pre class="bibtex-preview-box">${escapeHtml(this.bibContent || '% No entries found. Upload papers in the Literature Papers tab.')}</pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-sm" id="btnCopyBib">Copy BibTeX</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnOkBib">Close</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    modal.querySelector('#btnCloseBibModal')?.addEventListener('click', close);
+    modal.querySelector('#btnOkBib')?.addEventListener('click', close);
+    modal.querySelector('#btnCopyBib')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(this.bibContent);
+      showToast('BibTeX copied to clipboard!', 'success');
+    });
+  }
+
+  updateCounts(val) {
+    const stats = calculateLatexCounts(val);
+    if (this.wordCountBadge) {
+      this.wordCountBadge.textContent = `~${stats.words} words`;
+      this.wordCountBadge.title = `~${stats.words} words (~${stats.readTimeMinutes} min read, excl. LaTeX)`;
+    }
+    if (this.charCountBadge) {
+      this.charCountBadge.textContent = `${stats.chars} chars`;
     }
   }
 
@@ -410,443 +535,182 @@ export class DraftEditorTabComponent {
     try {
       const draft = await api.getDraft(projectId);
       if (draft) {
-        if (this.titleInput) this.titleInput.value = draft.title || 'survey_paper.tex';
-        if (this.textarea)   this.textarea.value   = draft.content || '';
-        this.updateGutter();
-        this.updateWordStats();
+        if (this.titleInput) this.titleInput.value = draft.title || 'main.tex';
+        const content = draft.content || '';
+        if (this.editor) {
+          this.editor.setValue(content);
+        }
+        this.updateCounts(content);
+        this.checkMarkdownDetection(content);
       }
     } catch (err) {
       console.error(err);
     }
   }
 
-  // =========================================================================
-  // Insert LaTeX outline skeleton from generated Outline
-  // =========================================================================
-  insertLatexOutlineSkeleton() {
-    const outline = store.getState('outline');
-    const project = store.getState('currentProject');
-    const sections = outline?.sections || [];
+  async executeSave() {
+    if (!this.currentProject) return null;
+    const title = this.titleInput?.value?.trim() || 'main.tex';
+    const content = this.editor ? this.editor.getValue() : '';
+    const isMd = isMarkdownContent(content);
 
-    if (sections.length === 0) {
-      showToast('No outline generated yet. Generate an outline first, or use "Load LaTeX Template".', 'warning');
-      return;
-    }
+    const data = {
+      title,
+      content,
+      format: isMd ? 'markdown' : 'latex',
+      schema_version: 1,
+      legacy_markdown: isMd ? content : ''
+    };
 
-    if (this.textarea.value.trim() &&
-        !confirm('Insert LaTeX outline skeleton? Your existing draft will be saved first.')) {
-      return;
-    }
-
-    const title  = project?.name || 'Survey Paper';
-    const topic  = project?.topic || 'Academic Literature Review';
-
-    const lines = [
-      `\\documentclass[10pt,a4paper]{article}`,
-      `\\usepackage[utf8]{inputenc}`,
-      `\\usepackage{amsmath,amssymb,graphicx,hyperref,cite,geometry}`,
-      `\\geometry{margin=1in}`,
-      ``,
-      `\\title{${title}}`,
-      `\\author{Your Name}`,
-      `\\date{\\today}`,
-      ``,
-      `\\begin{document}`,
-      `\\maketitle`,
-      ``,
-      `\\begin{abstract}`,
-      `This survey synthesizes current methodologies, empirical findings, and foundational gaps across the ${topic} literature.`,
-      `\\end{abstract}`,
-      ``,
-    ];
-
-    sections.forEach(s => {
-      const cites = (s.suggested_citations || []).join(', ');
-      const citeNote = cites ? `\n% Suggested citations: ${cites}` : '';
-      lines.push(`\\section{${s.number} ${s.title}}${citeNote}`);
-      if (s.description) lines.push(`% ${s.description}`);
-      lines.push(`% TODO: Synthesize claims and compare approaches here`);
-      lines.push(``);
-    });
-
-    lines.push(`\\begin{thebibliography}{99}`);
-    lines.push(`  % Add \\bibitem entries here`);
-    lines.push(`\\end{thebibliography}`);
-    lines.push(``);
-    lines.push(`\\end{document}`);
-
-    this.textarea.value = lines.join('\n');
-    this.updateGutter();
-    this.updateWordStats();
-    this.queueAutoSave();
-    showToast('LaTeX outline skeleton inserted!', 'success');
+    return await api.saveDraft(this.currentProject.id, data);
   }
 
-  // =========================================================================
-  // Compile & Audit (main action)
-  // =========================================================================
-  async compileAndAudit() {
-    const project = store.getState('currentProject');
-    if (!project) return;
-
-    const latexSrc   = this.textarea?.value?.trim();
-    const draftTitle = this.titleInput?.value?.trim() || 'survey_paper.tex';
-
-    if (!latexSrc || latexSrc.split(/\s+/).length < 10) {
-      showToast('Please write some LaTeX content before compiling (min 10 words).', 'warning');
+  async compileDraft(isBackground = false, forceMarkdown = false) {
+    if (!this.currentProject) {
+      showToast('Select a project first', 'warning');
       return;
     }
 
-    if (this.isCompiling) return;
-    this.isCompiling = true;
-
-    // Open terminal drawer, switch to Console tab first
-    this.terminalDrawer?.classList.remove('hidden');
-    this.switchTerminalTab('termConsole');
-
-    const btn = this.btnCompile;
-    const origHtml = btn ? btn.innerHTML : '';
-    if (btn) {
-      btn.innerHTML = `<span class="spin-dot" style="border-top-color:white;"></span> Compiling...`;
-      btn.disabled = true;
+    const tex = this.editor ? this.editor.getValue().trim() : '';
+    if (!tex) {
+      showToast('Editor is empty.', 'warning');
+      return;
     }
 
-    this.logConsole(`[${new Date().toLocaleTimeString()}] ▶ Starting LaTeX compilation: "${draftTitle}"...`);
-    this.logConsole(`[${new Date().toLocaleTimeString()}] Parsing LaTeX source (${latexSrc.split(/\s+/).length} tokens)...`);
-    this.logConsole(`[${new Date().toLocaleTimeString()}] Converting LaTeX → HTML preview...`);
+    if (!forceMarkdown && isMarkdownContent(tex)) {
+      this.markdownBanner?.classList.remove('hidden');
+      showToast('Detected Markdown. Please convert to LaTeX to compile.', 'warning');
+      return;
+    }
+
+    // 1. Run client-side pre-compile audit (never blocking)
+    const preWarnings = runClientPreCompileAudit(tex, this.availableBibKeys);
+
+    // Open terminal drawer and switch to Problems
+    if (!isBackground) {
+      this.terminalDrawer?.classList.remove('hidden');
+      this.switchTerminalTab('termProblems');
+    }
+
+    this.logToTerminal(`[${new Date().toLocaleTimeString()}] ▶ Compiling LaTeX for "${this.titleInput?.value || 'main.tex'}"...`);
 
     // Auto-save first
-    await this.saveDraft();
+    await this.autosave.triggerSave(true);
 
     try {
-      const result = await api.compileDraft(project.id, latexSrc, draftTitle);
-      this.isCompiling = false;
-      if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
+      const paperSize = this.paperSizeSelect?.value || 'letter';
+      const result = await this.compiler.compile({
+        projectId: this.currentProject.id,
+        latexSrc: tex,
+        docTitle: this.titleInput?.value || 'main.tex',
+        bibSrc: this.bibContent,
+        paperSize,
+        onAuditComplete: (res) => this.handleAuditResults(res, preWarnings)
+      });
 
-      const health = result.health_score || 0;
-
-      this.logConsole(`[${new Date().toLocaleTimeString()}] ✓ Compilation complete. Health score: ${health}/100`);
-      this.logConsole(`[${new Date().toLocaleTimeString()}] Readability: Flesch ${result.readability?.flesch_reading_ease ?? '--'}, Fog ${result.readability?.gunning_fog ?? '--'}`);
-      this.logConsole(`[${new Date().toLocaleTimeString()}] Literature overlap: ${result.overlap?.overall_overlap_pct ?? 0}% (${result.overlap?.risk_level ?? 'Clean'})`);
-
-      if (result.warnings?.length) {
-        result.warnings.forEach(w => this.logConsole(`[WARN] ${w}`));
+      if (result && result.log) {
+        this.renderLog(result.log);
       }
 
-      // Render compiled PDF preview in the live right half-screen preview pane
-      this.renderCompiledPreview(result.html, result.meta, result.pdf_pages || []);
-
-      // Update health badge
-      if (this.termHealthScoreBadge) {
-        this.termHealthScoreBadge.textContent = `Health: ${health}/100`;
-        this.termHealthScoreBadge.style.color = health >= 75
-          ? 'var(--success)' : health >= 50 ? 'var(--warning)' : 'var(--critical)';
+      if (this.onDraftAudited) {
+        this.onDraftAudited();
       }
-
-      // Populate Metrics tab
-      if (this.termMetricHealth)  this.termMetricHealth.textContent  = `${health}/100`;
-      if (this.termMetricFRE)     this.termMetricFRE.textContent     = `${result.readability?.flesch_reading_ease ?? '--'}`;
-      if (this.termMetricFog)     this.termMetricFog.textContent     = `${result.readability?.gunning_fog ?? '--'} (${result.readability?.grade_level ?? ''})`;
-      if (this.termMetricOverlap) this.termMetricOverlap.textContent = `${result.overlap?.overall_overlap_pct ?? 0}% (${result.overlap?.risk_level ?? 'Clean'})`;
-
-      // Populate Problems tab
-      this.renderProblems(result.issues || []);
-
-      showToast(`Compiled! Health: ${health}/100`, health >= 70 ? 'success' : 'info');
-      this.onDraftAudited?.();
-
-      // If critical problems exist, show Problems tab in terminal drawer
-      const hasCritical = (result.issues || []).some(i => i.severity === 'critical');
-      setTimeout(() => this.switchTerminalTab(hasCritical ? 'termProblems' : 'termMetrics'), 400);
     } catch (err) {
-      this.isCompiling = false;
-      if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
-      this.logConsole(`[${new Date().toLocaleTimeString()}] ✕ Compilation failed: ${err.message}`);
-      showToast(`Compilation failed: ${err.message}`, 'error');
+      this.logToTerminal(`[${new Date().toLocaleTimeString()}] ✕ Compilation error: ${err.message}`);
+      showToast(`Compile error: ${err.message}`, 'error');
     }
   }
 
-  // =========================================================================
-  // Render compiled LaTeX PDF preview
-  // =========================================================================
-  renderCompiledPreview(htmlContent, meta, pdfPages = []) {
-    if (!this.termCompiledView) return;
+  handleAuditResults(result, preWarnings = []) {
+    const health = result.health_score || 0;
 
-    const docTitle = meta?.title || this.titleInput?.value || 'Untitled Document';
-    const safeTitle = escapeHtml(docTitle);
-    const pageCount = pdfPages.length || 1;
-
-    let paperHtml = '';
-    if (pdfPages && pdfPages.length > 0) {
-      // High-fidelity rendered PDF pages from PyMuPDF
-      const pagesHtml = pdfPages.map((pageUrl, idx) => `
-        <div class="latex-pdf-page-card">
-          <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px;color:#999;font-family:'Inter',sans-serif;">
-            <span>Page ${idx + 1} of ${pageCount}</span>
-            <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#777;">IEEE Standard A4</span>
-          </div>
-          <img class="latex-pdf-page-sheet" src="${pageUrl}" alt="Compiled Draft Page ${idx + 1}" />
-        </div>
-      `).join('');
-
-      paperHtml = `
-        <div class="latex-pdf-pages-container">
-          ${pagesHtml}
-        </div>
-      `;
-    } else {
-      // Clean HTML fallback
-      paperHtml = `
-        <div id="latexRenderedPaper">
-          ${htmlContent}
-        </div>
-      `;
+    // Update health badges
+    if (this.termHealthScoreBadge) {
+      this.termHealthScoreBadge.textContent = `Health: ${health}/100`;
+      this.termHealthScoreBadge.style.color = health >= 75 ? 'var(--success)' : health >= 50 ? 'var(--warning)' : 'var(--critical)';
     }
 
-    this.termCompiledView.innerHTML = `
-      <div class="latex-preview-wrapper">
-        <div class="latex-preview-toolbar">
-          <span class="latex-preview-label">
-            <!-- PDF icon -->
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-            ${safeTitle}
-          </span>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;">${pageCount} Page${pageCount > 1 ? 's' : ''}</span>
-            <span class="latex-preview-badge">Compiled PDF</span>
-          </div>
-        </div>
-        <div class="latex-preview-paper">
-          ${paperHtml}
-        </div>
-      </div>
-    `;
+    if (this.termMetricHealth) this.termMetricHealth.textContent = `${health}/100`;
+    if (this.termMetricFRE) this.termMetricFRE.textContent = `${result.readability?.flesch_reading_ease ?? '--'}`;
+    if (this.termMetricFog) this.termMetricFog.textContent = `${result.readability?.gunning_fog ?? '--'} (${result.readability?.grade_level ?? ''})`;
+    if (this.termMetricOverlap) this.termMetricOverlap.textContent = `${result.overlap?.overall_overlap_pct ?? 0}% (${result.overlap?.risk_level ?? 'Clean'})`;
 
-    // Trigger KaTeX render if using HTML fallback
-    const paper = document.getElementById('latexRenderedPaper');
-    if (paper && window.renderMathInElement) {
-      try {
-        window.renderMathInElement(paper, {
-          delimiters: [
-            { left: '\\[', right: '\\]', display: true },
-            { left: '\\(', right: '\\)', display: false },
-          ],
-          throwOnError: false,
-        });
-      } catch (e) { /* KaTeX not available */ }
+    // Merge backend errors/warnings with client pre-compile warnings
+    const combinedIssues = [...(result.errors || []), ...(result.warnings || []), ...preWarnings];
+    this.renderProblems(combinedIssues);
+
+    if (this.editor) {
+      this.editor.applyErrorMarkers(result.errors || []);
     }
   }
 
-  // =========================================================================
-  // Problems renderer
-  // =========================================================================
   renderProblems(issues = []) {
     if (!this.termProblemsList) return;
-    if (this.termProblemsCount) this.termProblemsCount.textContent = issues.length;
+    this.currentErrors = issues;
 
-    this.termProblemsList.innerHTML = '';
+    if (this.termProblemsCount) {
+      this.termProblemsCount.textContent = issues.length;
+      this.termProblemsCount.style.background = issues.some((i) => i.severity === 'error') ? '#ef4444' : '#64748b';
+    }
 
     if (issues.length === 0) {
       this.termProblemsList.innerHTML = `
-        <div class="term-clean-state">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          <span>Zero critical problems detected! Your LaTeX draft passes structural, citation, and readability audits.</span>
+        <div class="term-empty-message" style="color:var(--success);">
+          ✓ No LaTeX syntax or bibliography problems detected.
         </div>
       `;
       return;
     }
 
-    issues.forEach(iss => {
-      const item = document.createElement('div');
-      item.className = `term-problem-item severity-${iss.severity}`;
-      const badgeClass = iss.severity === 'critical'
-        ? 'badge-critical' : iss.severity === 'warning' ? 'badge-warning' : 'badge-info';
-      item.innerHTML = `
-        <div class="term-problem-header">
-          <span class="badge ${badgeClass}">${iss.severity.toUpperCase()}</span>
-          <strong class="term-problem-title">${escapeHtml(iss.title)}</strong>
-          <span class="term-problem-loc">${escapeHtml(iss.location || 'Draft')}</span>
-        </div>
-        <div class="term-problem-desc">${escapeHtml(iss.description)}</div>
-        <div class="term-problem-fix">
-          <span class="fix-label">Suggested fix:</span> ${escapeHtml(iss.suggestion || 'Revise.')}
+    const items = issues.map((iss, idx) => {
+      const isErr = iss.severity === 'error' || iss.severity === 'critical';
+      const icon = isErr ? '✕' : '⚠';
+      const color = isErr ? '#ef4444' : '#f59e0b';
+      const lineText = iss.line ? `Line ${iss.line}: ` : '';
+
+      return `
+        <div class="problem-item" data-line="${iss.line || ''}" style="cursor:pointer;padding:6px 12px;border-bottom:1px solid rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px;font-size:12px;">
+          <span style="color:${color};font-weight:bold;">${icon}</span>
+          <span style="flex:1;"><strong>${lineText}</strong>${escapeHtml(iss.message || iss.description || 'Syntax warning')}</span>
+          ${iss.line ? `<span style="color:#94a3b8;font-size:11px;">Jump →</span>` : ''}
         </div>
       `;
-      this.termProblemsList.appendChild(item);
-    });
-  }
+    }).join('');
 
-  // =========================================================================
-  // Console log helper
-  // =========================================================================
-  logConsole(line) {
-    if (!this.termConsoleOutput) return;
-    const div = document.createElement('div');
-    div.className = 'console-line';
-    div.textContent = line;
-    this.termConsoleOutput.appendChild(div);
-    this.termConsoleOutput.scrollTop = this.termConsoleOutput.scrollHeight;
-  }
+    this.termProblemsList.innerHTML = items;
 
-  switchTerminalTab(paneId) {
-    this.terminalTabs.forEach(b => {
-      b.classList.toggle('active', b.dataset.termTab === paneId);
-    });
-    this.terminalPanes.forEach(p => {
-      p.classList.toggle('active', p.id === paneId);
-    });
-  }
-
-  // =========================================================================
-  // Floating / Live Co-Pilot Chat Drawer Controller
-  // =========================================================================
-  setupDockedChat() {
-    this.floatingWrapper = $('#floatingChatWrapper');
-    this.floatingTrigger = $('#btnFloatingChatTrigger');
-    this.floatingDrawer  = $('#floatingChatDrawer');
-    this.floatingClose   = $('#btnCloseFloatingChat');
-
-    const toggleFloatingChat = (open) => {
-      const shouldOpen = open !== undefined
-        ? open
-        : this.floatingDrawer?.classList.contains('hidden');
-
-      if (shouldOpen) {
-        this.floatingDrawer?.classList.remove('hidden');
-        this.floatingTrigger?.classList.add('chat-open');
-        this.floatingTrigger?.querySelector('.icon-chat-open')?.classList.add('hidden');
-        this.floatingTrigger?.querySelector('.icon-chat-close')?.classList.remove('hidden');
-        setTimeout(() => this.dockedChatInput?.focus(), 150);
-      } else {
-        this.floatingDrawer?.classList.add('hidden');
-        this.floatingTrigger?.classList.remove('chat-open');
-        this.floatingTrigger?.querySelector('.icon-chat-open')?.classList.remove('hidden');
-        this.floatingTrigger?.querySelector('.icon-chat-close')?.classList.add('hidden');
-      }
-    };
-
-    this.floatingTrigger?.addEventListener('click', (e) => {
-      e?.preventDefault();
-      toggleFloatingChat();
-    });
-
-    this.floatingClose?.addEventListener('click', (e) => {
-      e?.preventDefault();
-      toggleFloatingChat(false);
-    });
-
-    // Close on Escape key
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !this.floatingDrawer?.classList.contains('hidden')) {
-        toggleFloatingChat(false);
-      }
-    });
-
-    if (this.dockedChatInput) {
-      this.mentionPopover = new MentionPopover(this.dockedChatInput);
-    }
-    this.dockedChatForm?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const text = this.dockedChatInput?.value?.trim();
-      if (text) this.sendDockedMessage(text);
-    });
-
-    this.dockedChips.forEach(chip => {
-      chip.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const prompt = chip.dataset.prompt;
-        if (prompt) this.sendDockedMessage(prompt);
+    // Attach click jump events
+    this.termProblemsList.querySelectorAll('.problem-item').forEach((el) => {
+      el.addEventListener('click', () => {
+        const line = parseInt(el.getAttribute('data-line'), 10);
+        if (line && this.editor) {
+          this.editor.jumpToLine(line);
+        }
       });
     });
   }
 
-  renderDockedChat(messages = []) {
-    if (!this.dockedChatMessages) return;
-    this.dockedChatMessages.innerHTML = `
-      <div class="chat-message assistant-message">
-        <div class="message-avatar">✦</div>
-        <div class="message-content">
-          <p>Welcome! I'm your docked co-pilot. As you write LaTeX on the left, ask me for literature citations, taxonomy tables, or math equations.</p>
-          <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Press <strong>"Audit &amp; Compile Draft"</strong> or <kbd>Ctrl+Enter</kbd> to compile your LaTeX and view the rendered output below.</p>
-        </div>
-      </div>
-    `;
-    messages.forEach(m => this.appendDockedChatMessage(m));
-    this.scrollDockedToBottom();
+  renderLog(logText) {
+    if (!this.termLogOutput) return;
+    const lines = logText.split('\n');
+    const htmlLines = lines.map((l) => {
+      if (l.includes('error') || l.startsWith('!')) {
+        return `<div class="console-line" style="color:#f87171;">${escapeHtml(l)}</div>`;
+      } else if (l.includes('Warning')) {
+        return `<div class="console-line" style="color:#fbbf24;">${escapeHtml(l)}</div>`;
+      } else {
+        return `<div class="console-line log-dim">${escapeHtml(l)}</div>`;
+      }
+    }).join('');
+
+    this.termLogOutput.innerHTML = htmlLines;
   }
 
-  async sendDockedMessage(text) {
-    const project = store.getState('currentProject');
-    const trimmed = text.trim();
-    if (!project || !trimmed) return;
-
-    if (this.dockedChatInput) this.dockedChatInput.value = '';
-
-    const userMsg = { role: 'user', content: trimmed, citations: [] };
-    this.appendDockedChatMessage(userMsg);
-    this.isWaitingResponse = true;
-
-    const bufferDiv = document.createElement('div');
-    bufferDiv.className = 'chat-message assistant-message chat-buffer-msg';
-    bufferDiv.id = 'dockedTypingIndicator';
-    bufferDiv.innerHTML = `
-      <div class="message-avatar">✦</div>
-      <div class="message-content buffer-content">
-        <div class="chat-buffer-dots"><span></span><span></span><span></span></div>
-        <span class="buffer-text">Consulting literature corpus &amp; LLM...</span>
-      </div>
-    `;
-    this.dockedChatMessages?.appendChild(bufferDiv);
-    this.scrollDockedToBottom();
-
-    try {
-      const res = await api.sendMessage(project.id, trimmed);
-      this.isWaitingResponse = false;
-      bufferDiv.remove();
-      this.appendDockedChatMessage(res);
-      const currentMsgs = store.getState('chatMessages') || [];
-      store.setState('chatMessages', [...currentMsgs, userMsg, res]);
-    } catch (err) {
-      this.isWaitingResponse = false;
-      bufferDiv.remove();
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'chat-message assistant-message error-message';
-      errorDiv.innerHTML = `
-        <div class="message-avatar" style="background:var(--critical);">✕</div>
-        <div class="message-content" style="border-color:#fca5a5; background:#fff5f5; color:#b91c1c;">
-          <p>Failed to get response from AI Co-Pilot: ${escapeHtml(err.message || 'Check settings and API key')}</p>
-        </div>
-      `;
-      this.dockedChatMessages?.appendChild(errorDiv);
-      this.scrollDockedToBottom();
-    }
-  }
-
-  appendDockedChatMessage(msg) {
-    if (!this.dockedChatMessages) return;
+  logToTerminal(msg) {
+    if (!this.termLogOutput) return;
     const div = document.createElement('div');
-    const isAssistant = msg.role === 'assistant';
-    div.className = `chat-message ${isAssistant ? 'assistant-message' : 'user-message'}`;
-    div.innerHTML = `
-      <div class="message-avatar">${isAssistant ? '✦' : '👤'}</div>
-      <div class="message-content">${formatMarkdown(msg.content)}</div>
-    `;
-    this.dockedChatMessages.appendChild(div);
-    this.scrollDockedToBottom();
-  }
-
-  scrollDockedToBottom() {
-    if (this.dockedChatMessages)
-      this.dockedChatMessages.scrollTop = this.dockedChatMessages.scrollHeight;
+    div.className = 'console-line log-info';
+    div.textContent = msg;
+    this.termLogOutput.appendChild(div);
   }
 }

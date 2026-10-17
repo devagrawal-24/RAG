@@ -12,7 +12,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="/static/styles.css">
-  <!-- KaTeX for LaTeX math rendering in the compiled preview pane -->
+  
+  <!-- CodeMirror 5 (cdnjs) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/stex/stex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
+
+  <!-- pdf.js (cdnjs) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window['pdfjs-dist/build/pdf']) {
+      window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- JSZip (cdnjs) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- KaTeX for LaTeX math rendering in preview pane -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
@@ -140,19 +169,46 @@
         <!-- TAB 0: DRAFT STUDIO IDE (TEXT EDITOR + LIVE CHAT + TERMINAL) -->
         <div id="tabDraftEditor" class="tab-pane active">
           <div class="draft-studio-container">
+            <!-- Markdown Detection Banner -->
+            <div id="draftMarkdownBanner" class="draft-notice-banner hidden">
+              <div class="draft-notice-left">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>This looks like Markdown. Convert it to IEEE LaTeX for two-column compilation.</span>
+              </div>
+              <div class="draft-notice-actions">
+                <button type="button" id="btnConvertBannerAction" class="btn btn-primary btn-xs">Convert to LaTeX</button>
+                <button type="button" id="btnCompileAnywayBannerAction" class="btn btn-outline btn-xs">Compile anyway</button>
+                <button type="button" id="btnDismissBannerAction" class="btn btn-icon btn-xs" title="Dismiss">✕</button>
+              </div>
+            </div>
+
             <!-- Studio Command Bar -->
             <div class="studio-toolbar">
               <div class="studio-toolbar-left">
                 <div class="draft-title-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-                  <input type="text" id="draftDocTitle" value="survey_paper.tex" placeholder="Document Title (.tex)" class="draft-title-input" />
+                  <input type="text" id="draftDocTitle" value="main.tex" placeholder="Document Title (.tex)" class="draft-title-input" />
                 </div>
                 <span id="draftSaveIndicator" class="draft-save-pill"><span class="pulse-dot"></span> Saved</span>
-                <span id="draftWordCountBadge" class="draft-stat-chip">0 words</span>
+                <span id="draftCompileStatusChip" class="draft-stat-chip compile-chip">Not compiled</span>
+                <span id="draftWordCountBadge" class="draft-stat-chip" title="Words excluding LaTeX commands, comments, and math">0 words</span>
                 <span id="draftCharCountBadge" class="draft-stat-chip">0 chars</span>
+                <span id="draftBibChip" class="draft-stat-chip bib-chip" title="Click to view references.bib preview">references.bib · 0 entries</span>
               </div>
 
               <div class="studio-toolbar-right">
+                <!-- Conference / Journal mode toggle -->
+                <div class="draft-style-select-wrap">
+                  <select id="draftPaperDocClass" class="draft-select-sm" title="IEEEtran document class option">
+                    <option value="conference" selected>conference</option>
+                    <option value="journal">journal</option>
+                  </select>
+                  <select id="draftPaperSize" class="draft-select-sm" title="Paper Size">
+                    <option value="letter" selected>US Letter</option>
+                    <option value="a4">A4</option>
+                  </select>
+                </div>
+
                 <button id="btnInsertOutlineSkeleton" class="btn btn-outline btn-sm" title="Insert sections from Grounded Outline into the editor">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
                   Insert LaTeX Outline
@@ -161,7 +217,7 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
                   Terminal & Output
                 </button>
-                <button id="btnCompileDraftReview" class="btn btn-compile btn-sm" title="Compile and Audit Draft for Pedagogical Review (Ctrl+Enter)">
+                <button id="btnCompileDraftReview" class="btn btn-compile btn-sm" title="Audit & Compile Draft (Ctrl+Enter)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                   <span>Audit & Compile Draft</span>
                   <kbd class="kbd-badge">Ctrl+Enter</kbd>
@@ -174,25 +230,52 @@
               <span class="latex-toolbar-label">LaTeX Tools:</span>
               <button type="button" class="btn-latex-tool" data-latex="section" title="Insert \section{}">\section</button>
               <button type="button" class="btn-latex-tool" data-latex="subsection" title="Insert \subsection{}">\subsection</button>
-              <button type="button" class="btn-latex-tool" data-latex="textbf" title="Insert \textbf{}">\textbf</button>
-              <button type="button" class="btn-latex-tool" data-latex="textit" title="Insert \textit{}">\textit</button>
+              <button type="button" class="btn-latex-tool" data-latex="textbf" title="Bold text \textbf{} (Ctrl+B)">\textbf</button>
+              <button type="button" class="btn-latex-tool" data-latex="textit" title="Italic text \textit{} (Ctrl+I)">\textit</button>
               <button type="button" class="btn-latex-tool" data-latex="itemize" title="Insert itemize list">\begin{itemize}</button>
               <button type="button" class="btn-latex-tool" data-latex="table" title="Insert LaTeX table">\begin{table}</button>
               <button type="button" class="btn-latex-tool" data-latex="equation" title="Insert LaTeX equation">\begin{equation}</button>
-              <button type="button" class="btn-latex-tool" data-latex="cite" title="Insert \cite{}">\cite</button>
-              <button type="button" id="btnLoadLatexTemplate" class="btn-latex-tool btn-template" title="Populate complete survey paper LaTeX document template">Load LaTeX Template</button>
+              <button type="button" class="btn-latex-tool" data-latex="cite" title="Insert citation \cite{}">\cite</button>
+              <button type="button" id="btnConvertMarkdownToolbar" class="btn-latex-tool btn-convert-md" title="Convert Markdown headings and formatting to LaTeX">Convert Markdown to LaTeX</button>
+              <button type="button" id="btnLoadLatexTemplate" class="btn-latex-tool btn-template" title="Populate complete IEEE survey paper LaTeX template">Load LaTeX Template</button>
             </div>
 
-            <!-- Main Split Workspace: Left Editor (50%) + Right Live Preview Pane (50%) -->
-            <div class="studio-split-body">
+            <!-- Main Split Workspace: Left Editor + Resizer + Right Live Preview Pane -->
+            <div id="studioSplitBody" class="studio-split-body">
               <!-- Left: Editor Pane -->
-              <div class="editor-pane">
-                <div class="editor-gutter" id="editorLineNumbers"><div>1</div></div>
-                <textarea id="draftEditorTextarea" class="editor-textarea" spellcheck="false" placeholder="\documentclass[10pt,a4paper]{article}&#10;\usepackage{amsmath,amssymb}&#10;\begin{document}&#10;\title{Survey Paper Title}&#10;\maketitle&#10;\begin{abstract}&#10;...&#10;\end{abstract}&#10;\section{Introduction}&#10;...&#10;\end{document}"></textarea>
+              <div id="editorSplitPane" class="editor-pane">
+                <div id="codeMirrorContainer" class="cm-host-container"></div>
+                <!-- Editor Bottom Status Bar -->
+                <div class="editor-status-bar">
+                  <span id="editorCursorPosition" class="status-item">Ln 1, Col 1</span>
+                  <span id="editorSelectionLength" class="status-item hidden">0 sel</span>
+                  <button type="button" id="btnToggleWordWrap" class="status-btn" title="Toggle Word Wrap">Wrap: On</button>
+                  <button type="button" id="btnVersionHistory" class="status-btn" title="Version History (Autosaves)">History (10)</button>
+                  <button type="button" id="btnEditorShortcutsHelp" class="status-btn" title="Keyboard Shortcuts">?</button>
+                </div>
               </div>
 
+              <!-- Resizable Split Handle -->
+              <div id="studioSplitResizer" class="studio-split-resizer" title="Drag to resize split pane, double-click to reset"></div>
+
               <!-- Right: Live Compiled LaTeX & PDF Preview Pane -->
-              <div class="editor-preview-pane">
+              <div id="previewSplitPane" class="editor-preview-pane">
+                <!-- PDF Control Header -->
+                <div class="preview-header-bar">
+                  <div class="preview-header-left">
+                    <span id="pdfPageLabel" class="pdf-header-label">Page 1 of 1</span>
+                    <span id="pdfStandardLabel" class="pdf-badge-label">IEEE STANDARD LETTER</span>
+                  </div>
+                  <div class="preview-header-controls">
+                    <button type="button" id="btnPdfZoomOut" class="preview-control-btn" title="Zoom Out">−</button>
+                    <span id="pdfZoomLabel" class="pdf-zoom-val">100%</span>
+                    <button type="button" id="btnPdfZoomIn" class="preview-control-btn" title="Zoom In">+</button>
+                    <button type="button" id="btnDownloadPdf" class="preview-control-btn" title="Download compiled PDF">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </button>
+                  </div>
+                </div>
+
                 <div id="latexCompiledView" class="latex-compiled-view">
                   <div class="latex-compiled-placeholder">
                     <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #0071e3; opacity: 0.85;">
@@ -201,7 +284,7 @@
                       <line x1="16" y1="13" x2="8" y2="13"/>
                       <line x1="16" y1="17" x2="8" y2="17"/>
                     </svg>
-                    <p style="color:var(--text-secondary);margin:0;font-weight:500;">Click <strong style="color:var(--primary);">"Audit &amp; Compile Draft"</strong> or press <strong style="color:var(--primary);">Ctrl+Enter</strong><br>to render your compiled LaTeX preview here side-by-side.</p>
+                    <p style="color:var(--text-secondary);margin:0;font-weight:500;">Click <strong style="color:var(--primary);">"Audit &amp; Compile Draft"</strong> or press <strong style="color:var(--primary);">Ctrl+Enter</strong><br>to render your compiled IEEE LaTeX preview side-by-side.</p>
                   </div>
                 </div>
               </div>
@@ -215,13 +298,13 @@
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     PROBLEMS <span id="termProblemsCount" class="terminal-count-badge">0</span>
                   </button>
-                  <button class="terminal-tab-btn" data-term-tab="termMetrics">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                    METRICS & HEALTH
+                  <button class="terminal-tab-btn" data-term-tab="termLog">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
+                    LOG
                   </button>
-                  <button class="terminal-tab-btn" data-term-tab="termConsole">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-                    TERMINAL OUTPUT
+                  <button class="terminal-tab-btn" data-term-tab="termAudit">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    AUDIT & HEALTH
                   </button>
                 </div>
 
@@ -232,16 +315,22 @@
               </div>
 
               <div class="terminal-drawer-body">
-
-                <!-- Tab 2: Problems -->
+                <!-- Tab 1: Problems -->
                 <div id="termProblems" class="term-tab-pane">
                   <div id="termProblemsList" class="term-problems-list">
                     <div class="term-empty-message">No diagnostics compiled yet. Click <strong>"Audit & Compile Draft"</strong> or press <strong>Ctrl+Enter</strong> to analyze your draft.</div>
                   </div>
                 </div>
 
-                <!-- Tab 2: Metrics -->
-                <div id="termMetrics" class="term-tab-pane">
+                <!-- Tab 2: Log -->
+                <div id="termLog" class="term-tab-pane" style="display:none;">
+                  <div id="termLogOutput" class="term-console-log">
+                    <div class="console-line log-info">[LaTeX Build Log Ready]</div>
+                  </div>
+                </div>
+
+                <!-- Tab 3: Audit -->
+                <div id="termAudit" class="term-tab-pane" style="display:none;">
                   <div class="term-metrics-grid">
                     <div class="term-metric-item">
                       <span class="label">Draft Health Score</span>
@@ -259,14 +348,6 @@
                       <span class="label">Literature Overlap</span>
                       <strong id="termMetricOverlap" class="val">--%</strong>
                     </div>
-                  </div>
-                </div>
-
-                <!-- Tab 3: Console Logs -->
-                <div id="termConsole" class="term-tab-pane">
-                  <div id="termConsoleOutput" class="term-console-log">
-                    <div class="console-line log-info">[Survey Paper AI-Assistant Studio Console Ready]</div>
-                    <div class="console-line log-dim">Press 'Audit & Compile Draft' to run structural, citation, readability, and overlap diagnostics.</div>
                   </div>
                 </div>
               </div>

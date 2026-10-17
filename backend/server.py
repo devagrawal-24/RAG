@@ -4,10 +4,13 @@ import uuid
 from dotenv import load_dotenv
 load_dotenv()
 from typing import List, Optional, Dict, Any
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
+import io
+import zipfile
+import base64
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 
 from backend.database import (
@@ -28,6 +31,8 @@ from backend.summarizer import summarize_single_paper, synthesize_combined_summa
 from backend.draft_reviewer import audit_draft
 from backend.llm_client import LLMClient
 from backend.latex_compiler import compile_latex_to_html
+from backend.compile_service import compile_latex_project, check_latex_available
+from backend.bib_generator import generate_bibtex_for_project
 
 # Initialize database
 init_db()
@@ -102,6 +107,9 @@ class DraftReviewReq(BaseModel):
 class ProjectDraftReq(BaseModel):
     title: Optional[str] = "Survey Paper Draft"
     content: str
+    format: Optional[str] = "latex"
+    schema_version: Optional[int] = 1
+    legacy_markdown: Optional[str] = ""
 
 class ChatReq(BaseModel):
     message: str
@@ -398,17 +406,95 @@ def api_save_project_draft(project_id: str, req: ProjectDraftReq):
     project = get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    return save_project_draft(project_id, req.title or "Survey Paper Draft", req.content)
+    return save_project_draft(
+        project_id,
+        req.title or "Survey Paper Draft",
+        req.content,
+        format=req.format or "latex",
+        schema_version=req.schema_version or 1,
+        legacy_markdown=req.legacy_markdown or ""
+    )
 
 
-# ----------------- LaTeX Compile Preview Endpoint -----------------
+# ----------------- LaTeX Compilation & BibTeX Endpoints -----------------
+BUILD_PDF_CACHE: Dict[str, bytes] = {}
+
+class DirectCompileOptions(BaseModel):
+    paper: Optional[str] = "letter"
+
+class DirectCompileReq(BaseModel):
+    tex: str
+    bib: Optional[str] = ""
+    options: Optional[DirectCompileOptions] = None
+
+@app.get("/api/compile/health")
+def api_compile_health():
+    """Reports whether latexmk, pdflatex, or tectonic are found in the system."""
+    return check_latex_available()
+
+@app.get("/api/pdf/{build_id}")
+def api_get_compiled_pdf(build_id: str):
+    """Serves compiled PDF bytes by build_id."""
+    pdf_bytes = BUILD_PDF_CACHE.get(build_id)
+    if not pdf_bytes:
+        raise HTTPException(status_code=404, detail="PDF build not found or expired.")
+    return Response(content=pdf_bytes, media_type="application/pdf")
+
+@app.get("/api/projects/{project_id}/references.bib")
+def api_get_project_bibtex(project_id: str):
+    """Generates and returns BibTeX file content from project Literature Papers."""
+    project = get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    papers = list_papers(project_id)
+    bib_text = generate_bibtex_for_project(papers)
+    return PlainTextResponse(bib_text, media_type="text/plain; charset=utf-8")
+
+@app.post("/api/compile")
+async def api_direct_compile(req: DirectCompileReq):
+    """
+    Standard LaTeX compile endpoint required by latexUI.md:
+    Accepts { tex, bib, options: { paper: "letter"|"a4" } }
+    Returns { ok, pdf_url, pdf_base64, log, errors, warnings, duration_ms }
+    """
+    tex = req.tex.strip()
+    if not tex:
+        raise HTTPException(status_code=400, detail="TeX source cannot be empty.")
+    
+    paper_size = (req.options.paper if req.options and req.options.paper else "letter").lower()
+    res = await compile_latex_project(tex, req.bib or "", paper_size=paper_size)
+    
+    pdf_url = None
+    pdf_base64 = None
+    if res.get("pdf_bytes"):
+        build_id = str(uuid.uuid4())
+        BUILD_PDF_CACHE[build_id] = res["pdf_bytes"]
+        # Evict old cached PDFs if cache grows large
+        if len(BUILD_PDF_CACHE) > 50:
+            oldest_key = next(iter(BUILD_PDF_CACHE))
+            BUILD_PDF_CACHE.pop(oldest_key, None)
+        pdf_url = f"/api/pdf/{build_id}"
+        pdf_base64 = base64.b64encode(res["pdf_bytes"]).decode("ascii")
+
+    return {
+        "ok": res.get("ok", False),
+        "pdf_url": pdf_url,
+        "pdf_base64": pdf_base64,
+        "log": res.get("log", ""),
+        "errors": res.get("errors", []),
+        "warnings": res.get("warnings", []),
+        "duration_ms": res.get("duration_ms", 0)
+    }
+
 class LatexCompileReq(BaseModel):
     latex_source: str
     title: Optional[str] = "Draft"
+    bib: Optional[str] = ""
+    paper_size: Optional[str] = "letter"
 
 @app.post("/api/projects/{project_id}/draft/compile")
-def api_compile_latex_draft(project_id: str, req: LatexCompileReq):
-    """Compile LaTeX source to an HTML preview and run structural audit simultaneously."""
+async def api_compile_latex_draft(project_id: str, req: LatexCompileReq):
+    """Compile LaTeX source, generate real PDF, and run pedagogical audit simultaneously."""
     project = get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -417,19 +503,42 @@ def api_compile_latex_draft(project_id: str, req: LatexCompileReq):
     if not latex_src:
         raise HTTPException(status_code=400, detail="LaTeX source cannot be empty.")
 
-    # Compile LaTeX → HTML preview
-    compile_result = compile_latex_to_html(latex_src)
+    # Get project papers for BibTeX if bib is empty
+    bib_src = req.bib
+    if not bib_src:
+        papers = list_papers(project_id)
+        bib_src = generate_bibtex_for_project(papers)
 
-    # Run full audit on the same content (strips LaTeX internally)
+    # 1. Run real compilation
+    comp_res = await compile_latex_project(latex_src, bib_src, paper_size=req.paper_size or "letter")
+
+    # 2. Compile HTML preview as fallback/inspector
+    html_res = compile_latex_to_html(latex_src)
+
+    # 3. Run full pedagogical audit
     source_chunks = get_project_chunks(project_id)
     audit_results = audit_draft(latex_src, source_chunks)
 
+    pdf_url = None
+    pdf_base64 = None
+    if comp_res.get("pdf_bytes"):
+        build_id = str(uuid.uuid4())
+        BUILD_PDF_CACHE[build_id] = comp_res["pdf_bytes"]
+        pdf_url = f"/api/pdf/{build_id}"
+        pdf_base64 = base64.b64encode(comp_res["pdf_bytes"]).decode("ascii")
+
     return {
-        "html": compile_result["html"],
-        "pdf_pages": compile_result.get("pdf_pages", []),
-        "has_pdf": compile_result.get("has_pdf", False),
-        "warnings": compile_result["warnings"],
-        "meta": compile_result["meta"],
+        "ok": comp_res.get("ok", False),
+        "pdf_url": pdf_url,
+        "pdf_base64": pdf_base64,
+        "html": html_res["html"],
+        "pdf_pages": html_res.get("pdf_pages", []),
+        "has_pdf": bool(comp_res.get("pdf_bytes") or html_res.get("pdf_pages")),
+        "log": comp_res.get("log", ""),
+        "errors": comp_res.get("errors", []),
+        "warnings": comp_res.get("warnings", []),
+        "duration_ms": comp_res.get("duration_ms", 0),
+        "meta": html_res["meta"],
         "health_score": audit_results["health_score"],
         "readability": audit_results["readability"],
         "issues": audit_results["issues"],
@@ -634,7 +743,7 @@ def api_clear_chat(project_id: str):
 
 # ----------------- Export Endpoints -----------------
 @app.get("/api/projects/{project_id}/export")
-def api_export_project(project_id: str, format: str = "markdown"):
+async def api_export_project(project_id: str, format: str = "markdown"):
     project = get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -699,6 +808,40 @@ def api_export_project(project_id: str, format: str = "markdown"):
             md_lines.append(f"- **[{iss.get('severity', '').upper()}] {iss.get('title')}:** {iss.get('description')} *Suggested fix: {iss.get('suggestion')}*")
 
     md_content = "\n".join(md_lines)
+
+    if format in ("zip", "dossier"):
+        draft = get_project_draft(project_id)
+        tex_content = draft.get("content") or ""
+        bib_content = generate_bibtex_for_project(papers)
+
+        # Get latest compiled PDF
+        pdf_bytes = None
+        # Check if we have a cached PDF or compile now
+        if BUILD_PDF_CACHE:
+            # Most recent cached PDF
+            pdf_bytes = list(BUILD_PDF_CACHE.values())[-1]
+        
+        if not pdf_bytes:
+            # Run one-off compile
+            comp_res = await compile_latex_project(tex_content, bib_content)
+            pdf_bytes = comp_res.get("pdf_bytes")
+
+        # Create zip in-memory
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("main.tex", tex_content or "% Survey Paper Draft\n")
+            zf.writestr("references.bib", bib_content or "% References\n")
+            if pdf_bytes:
+                zf.writestr("main.pdf", pdf_bytes)
+            zf.writestr("dossier_summary.md", md_content)
+        
+        buf.seek(0)
+        proj_slug = re.sub(r"[^a-zA-Z0-9_\-]", "_", project.get("name", "survey_project")).strip("_") or "dossier"
+        return StreamingResponse(
+            buf,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename={proj_slug}_dossier.zip"}
+        )
 
     if format == "markdown" or format == "md":
         return PlainTextResponse(md_content, media_type="text/markdown", headers={

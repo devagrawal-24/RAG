@@ -126,10 +126,22 @@ def init_db():
             project_id TEXT PRIMARY KEY,
             title TEXT DEFAULT 'Survey Paper Draft',
             content TEXT DEFAULT '',
+            format TEXT DEFAULT 'latex',
+            schema_version INTEGER DEFAULT 1,
+            legacy_markdown TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
         );
         """)
+
+        # Backward compatibility migration for project_drafts
+        cols = [c[1] for c in conn.execute("PRAGMA table_info(project_drafts)").fetchall()]
+        if "format" not in cols:
+            conn.execute("ALTER TABLE project_drafts ADD COLUMN format TEXT DEFAULT 'latex'")
+        if "schema_version" not in cols:
+            conn.execute("ALTER TABLE project_drafts ADD COLUMN schema_version INTEGER DEFAULT 1")
+        if "legacy_markdown" not in cols:
+            conn.execute("ALTER TABLE project_drafts ADD COLUMN legacy_markdown TEXT DEFAULT ''")
 
         conn.execute("""
         CREATE TABLE IF NOT EXISTS chat_messages (
@@ -552,29 +564,63 @@ def list_draft_reviews(project_id: str) -> List[Dict[str, Any]]:
         results.append(d)
     return results
 
-def save_project_draft(project_id: str, title: str, content: str) -> Dict[str, Any]:
+def save_project_draft(project_id: str, title: str, content: str, format: str = "latex", schema_version: int = 1, legacy_markdown: str = "") -> Dict[str, Any]:
     conn = get_db_connection()
     now = datetime.utcnow().isoformat()
     with conn:
         conn.execute("""
-            INSERT INTO project_drafts (project_id, title, content, updated_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO project_drafts (project_id, title, content, format, schema_version, legacy_markdown, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(project_id) DO UPDATE SET
                 title = excluded.title,
                 content = excluded.content,
+                format = excluded.format,
+                schema_version = excluded.schema_version,
+                legacy_markdown = CASE WHEN excluded.legacy_markdown != '' THEN excluded.legacy_markdown ELSE project_drafts.legacy_markdown END,
                 updated_at = excluded.updated_at
-        """, (project_id, title, content, now))
+        """, (project_id, title, content, format, schema_version, legacy_markdown, now))
     conn.close()
     touch_project(project_id)
-    return {"project_id": project_id, "title": title, "content": content, "updated_at": now}
+    return {
+        "project_id": project_id,
+        "title": title,
+        "content": content,
+        "format": format,
+        "schema_version": schema_version,
+        "legacy_markdown": legacy_markdown,
+        "updated_at": now
+    }
 
 def get_project_draft(project_id: str) -> Dict[str, Any]:
     conn = get_db_connection()
     row = conn.execute("SELECT * FROM project_drafts WHERE project_id = ?", (project_id,)).fetchone()
     conn.close()
     if row:
-        return dict(row)
-    return {"project_id": project_id, "title": "Survey Paper Draft", "content": "", "updated_at": None}
+        d = dict(row)
+        # Idempotent migration detection for existing markdown
+        content = d.get("content") or ""
+        fmt = d.get("format") or "latex"
+        legacy = d.get("legacy_markdown") or ""
+        # Check if looks like markdown (starts with # or ## or *Topic: and lacks \documentclass)
+        stripped = content.strip()
+        if (stripped.startswith("#") or "\n#" in stripped or stripped.startswith("*Topic:") or stripped.startswith("##")) and "\\documentclass" not in stripped:
+            if fmt != "markdown" or not legacy:
+                fmt = "markdown"
+                legacy = legacy or content
+                # Persist migration
+                save_project_draft(project_id, d.get("title") or "Survey Paper Draft", content, format="markdown", schema_version=1, legacy_markdown=legacy)
+                d["format"] = "markdown"
+                d["legacy_markdown"] = legacy
+        return d
+    return {
+        "project_id": project_id,
+        "title": "Survey Paper Draft",
+        "content": "",
+        "format": "latex",
+        "schema_version": 1,
+        "legacy_markdown": "",
+        "updated_at": None
+    }
 
 def add_chat_message(project_id: str, role: str, content: str, citations: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     conn = get_db_connection()
