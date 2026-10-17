@@ -14,9 +14,21 @@
 #   - References: \cite{key}, \label{key}, \ref{key}
 #   - Booktabs: \toprule, \midrule, \bottomrule
 
+import os
 import re
 import base64
 from typing import Tuple, List, Dict, Any, Optional
+
+# ---------------------------------------------------------------------------
+# Draft output directory – mirrors database.DATA_DIR so all generated files
+# stay inside data/ instead of the project root.
+# ---------------------------------------------------------------------------
+_DATA_DIR   = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+DRAFTS_DIR  = os.path.join(_DATA_DIR, "drafts")
+os.makedirs(DRAFTS_DIR, exist_ok=True)
+
+# Absolute path of the shared intermediate PDF produced by the PyMuPDF engine.
+DRAFT_PREVIEW_PDF = os.path.join(DRAFTS_DIR, "draft_preview.pdf")
 
 try:
     import pymupdf as fitz
@@ -641,11 +653,11 @@ def compile_latex_to_pdf_bytes(latex_src: str, html_body: str, meta: Dict[str, A
             col = col1_norm if (n % 2 == 0) else col2_norm
             return (mb, col, None)
 
-        writer = fitz.DocumentWriter("draft_preview.pdf")
+        writer = fitz.DocumentWriter(DRAFT_PREVIEW_PDF)
         story.write(writer, rectfn)
         writer.close()
 
-        doc = fitz.open("draft_preview.pdf")
+        doc = fitz.open(DRAFT_PREVIEW_PDF)
         if len(doc) == 0:
             doc.insert_page(0, width=595.3, height=841.9)
 
