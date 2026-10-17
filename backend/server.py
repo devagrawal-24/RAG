@@ -7,7 +7,6 @@ from typing import List, Optional, Dict, Any
 import io
 import zipfile
 import base64
-import docx
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
