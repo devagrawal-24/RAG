@@ -533,7 +533,7 @@ export class DraftEditorTabComponent {
         result.warnings.forEach(w => this.logConsole(`[WARN] ${w}`));
       }
 
-      // Render compiled PDF preview
+      // Render compiled PDF preview in the live right half-screen preview pane
       this.renderCompiledPreview(result.html, result.meta, result.pdf_pages || []);
 
       // Update health badge
@@ -555,13 +555,9 @@ export class DraftEditorTabComponent {
       showToast(`Compiled! Health: ${health}/100`, health >= 70 ? 'success' : 'info');
       this.onDraftAudited?.();
 
-      // Switch to compiled preview tab after short delay
-      setTimeout(() => this.switchTerminalTab('termCompiledOutput'), 400);
-
-      // If problems, switch to problems after preview display
-      if ((result.issues || []).filter(i => i.severity === 'critical').length > 0) {
-        setTimeout(() => this.switchTerminalTab('termProblems'), 1800);
-      }
+      // If critical problems exist, show Problems tab in terminal drawer
+      const hasCritical = (result.issues || []).some(i => i.severity === 'critical');
+      setTimeout(() => this.switchTerminalTab(hasCritical ? 'termProblems' : 'termMetrics'), 400);
     } catch (err) {
       this.isCompiling = false;
       if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
@@ -710,9 +706,50 @@ export class DraftEditorTabComponent {
   }
 
   // =========================================================================
-  // Docked Live Co-Pilot Chat
+  // Floating / Live Co-Pilot Chat Drawer Controller
   // =========================================================================
   setupDockedChat() {
+    this.floatingWrapper = $('#floatingChatWrapper');
+    this.floatingTrigger = $('#btnFloatingChatTrigger');
+    this.floatingDrawer  = $('#floatingChatDrawer');
+    this.floatingClose   = $('#btnCloseFloatingChat');
+
+    const toggleFloatingChat = (open) => {
+      const shouldOpen = open !== undefined
+        ? open
+        : this.floatingDrawer?.classList.contains('hidden');
+
+      if (shouldOpen) {
+        this.floatingDrawer?.classList.remove('hidden');
+        this.floatingTrigger?.classList.add('chat-open');
+        this.floatingTrigger?.querySelector('.icon-chat-open')?.classList.add('hidden');
+        this.floatingTrigger?.querySelector('.icon-chat-close')?.classList.remove('hidden');
+        setTimeout(() => this.dockedChatInput?.focus(), 150);
+      } else {
+        this.floatingDrawer?.classList.add('hidden');
+        this.floatingTrigger?.classList.remove('chat-open');
+        this.floatingTrigger?.querySelector('.icon-chat-open')?.classList.remove('hidden');
+        this.floatingTrigger?.querySelector('.icon-chat-close')?.classList.add('hidden');
+      }
+    };
+
+    this.floatingTrigger?.addEventListener('click', (e) => {
+      e?.preventDefault();
+      toggleFloatingChat();
+    });
+
+    this.floatingClose?.addEventListener('click', (e) => {
+      e?.preventDefault();
+      toggleFloatingChat(false);
+    });
+
+    // Close on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !this.floatingDrawer?.classList.contains('hidden')) {
+        toggleFloatingChat(false);
+      }
+    });
+
     if (this.dockedChatInput) {
       this.mentionPopover = new MentionPopover(this.dockedChatInput);
     }
