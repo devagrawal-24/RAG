@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 import io
 import zipfile
 import base64
+import docx
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -325,7 +326,6 @@ async def api_audit_draft(
             extracted_draft = "\n\n".join([p["text"] for p in parsed["pages"]])
             os.remove(temp_path)
         elif filename.endswith(".docx"):
-            import docx
             temp_path = os.path.join(UPLOAD_DIR, f"draft_{uuid.uuid4()}.docx")
             with open(temp_path, "wb") as buf:
                 shutil.copyfileobj(file.file, buf)
