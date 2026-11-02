@@ -565,6 +565,9 @@ def api_chat(project_id: str, req: ChatReq):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    # Fetch recent conversation history strictly for this project before adding new message
+    prev_history = get_chat_history(project_id, limit=8)
+
     # Add user message to history
     add_chat_message(project_id, "user", user_msg)
 
@@ -735,8 +738,17 @@ def api_chat(project_id: str, req: ChatReq):
     settings = get_all_settings()
     client = LLMClient(settings)
     
+    # Build conversation messages with project-scoped history
+    conversation_messages = []
+    for past_msg in prev_history:
+        role = past_msg.get("role")
+        content = past_msg.get("content")
+        if role in ("user", "assistant") and content:
+            conversation_messages.append({"role": role, "content": content})
+    conversation_messages.append({"role": "user", "content": full_prompt})
+
     # Generate response
-    response_content = client.generate([{"role": "user", "content": full_prompt}], system_prompt)
+    response_content = client.generate(conversation_messages, system_prompt)
 
     assistant_msg = add_chat_message(project_id, "assistant", response_content, citations)
     return assistant_msg

@@ -12,6 +12,8 @@ export class FloatingChatComponent {
     this.triggerBtn = $('#btnFloatingChatTrigger');
     this.drawer = $('#floatingChatDrawer');
     this.closeBtn = $('#btnCloseFloatingChat');
+    this.btnClear = $('#btnClearFloatingChat');
+    this.subtitleEl = $('#floatingChatSubtitle');
     this.iconOpen = this.triggerBtn?.querySelector('.icon-chat-open');
     this.iconClose = this.triggerBtn?.querySelector('.icon-chat-close');
     this.quickChips = $$('.docked-chip');
@@ -23,6 +25,7 @@ export class FloatingChatComponent {
     this.isOpen = false;
 
     this.init();
+    this.updateProjectHeader(store.getState('currentProject'));
   }
 
   init() {
@@ -42,14 +45,21 @@ export class FloatingChatComponent {
       this.close();
     });
 
-    // 3. Close on Escape key
+    // 3. Clear chat thread button in header
+    this.btnClear?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.clearChat();
+    });
+
+    // 4. Close on Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {
         this.close();
       }
     });
 
-    // 4. Close if clicking outside the drawer and trigger button
+    // 5. Close if clicking outside the drawer and trigger button
     document.addEventListener('click', (e) => {
       if (!this.isOpen) return;
       if (!this.drawer.contains(e.target) && !this.triggerBtn.contains(e.target)) {
@@ -60,12 +70,12 @@ export class FloatingChatComponent {
       }
     });
 
-    // 5. Mention popover for @-trigger paper search in popup input
+    // 6. Mention popover for @-trigger paper search in popup input
     if (this.input) {
       this.mentionPopover = new MentionPopover(this.input);
     }
 
-    // 6. Handle message submission
+    // 7. Handle message submission
     this.form?.addEventListener('submit', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -74,7 +84,7 @@ export class FloatingChatComponent {
       }
     });
 
-    // 7. Quick chip prompt buttons
+    // 8. Quick chip prompt buttons
     this.quickChips.forEach(chip => {
       chip.addEventListener('click', (e) => {
         e.preventDefault();
@@ -86,12 +96,48 @@ export class FloatingChatComponent {
       });
     });
 
-    // 8. Subscribe to chatMessages state store to keep in sync with Chat tab
+    // 9. Subscribe to currentProject to update project context & close drawer when exiting
+    store.subscribe('currentProject', (project) => {
+      this.updateProjectHeader(project);
+      if (!project) {
+        this.close();
+      }
+    });
+
+    // 10. Subscribe to chatMessages state store to keep in sync with Chat tab
     store.subscribe('chatMessages', (messages) => {
       if (!this.isWaitingResponse) {
         this.render(messages || []);
       }
     });
+  }
+
+  hide() {
+    this.wrapper?.classList.add('hidden');
+  }
+
+  show() {
+    this.wrapper?.classList.remove('hidden');
+  }
+
+  updateProjectHeader(project) {
+    if (this.subtitleEl) {
+      this.subtitleEl.textContent = project ? `Project: ${project.name}` : 'Context-grounded survey paper assistant';
+    }
+  }
+
+  async clearChat() {
+    const project = store.getState('currentProject');
+    if (!project) return;
+    if (!confirm(`Clear chat conversation for "${project.name}"?`)) return;
+
+    try {
+      await api.clearChat(project.id);
+      store.setState('chatMessages', []);
+      showToast('Project chat history cleared', 'info');
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   toggle() {
@@ -127,11 +173,15 @@ export class FloatingChatComponent {
   render(messages = []) {
     if (!this.container) return;
 
+    const project = store.getState('currentProject');
+    const projName = project ? escapeHtml(project.name) : 'your project';
+    const topicText = project?.topic ? ` on "${escapeHtml(project.topic)}"` : '';
+
     this.container.innerHTML = `
       <div class="chat-message assistant-message">
         <div class="message-avatar">✦</div>
         <div class="message-content">
-          <p>Welcome! I'm your research co-pilot. I have full context of your uploaded papers, generated taxonomy outline, and drafts.</p>
+          <p>Welcome! I'm your research co-pilot for <strong>${projName}</strong>${topicText}. I have full context of this project's uploaded papers, generated taxonomy outline, and drafts.</p>
           <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Ask me for literature citations, taxonomy comparisons, or LaTeX math equations anytime.</p>
         </div>
       </div>

@@ -116,6 +116,8 @@ class SurveyApp {
     const savedProjectId = localStorage.getItem('spa_active_project_id');
     if (savedProjectId) {
       this.openProject(savedProjectId, false);
+    } else {
+      this.floatingChat?.close();
     }
   }
 
@@ -140,6 +142,10 @@ class SurveyApp {
 
   async openProject(projectId, saveHistory = true) {
     try {
+      // Immediately reset chat messages and close drawer to prevent previous project chat leakage
+      store.setState('chatMessages', []);
+      this.floatingChat?.close();
+
       const project = await api.getProject(projectId);
       store.setState('currentProject', project);
 
@@ -171,7 +177,9 @@ class SurveyApp {
 
   closeProject() {
     this.paperPoller.stop();
+    this.floatingChat?.close();
     store.setState('currentProject', null);
+    store.setState('chatMessages', []);
     localStorage.removeItem('spa_active_project_id');
 
     this.viewWorkspace?.classList.add('hidden');

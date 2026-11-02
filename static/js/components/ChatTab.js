@@ -53,13 +53,17 @@ export class ChatTabComponent {
   render(messages = []) {
     if (!this.container) return;
 
+    const project = store.getState('currentProject');
+    const projName = project ? escapeHtml(project.name) : 'your project';
+    const topicText = project?.topic ? ` on "${escapeHtml(project.topic)}"` : '';
+
     this.container.innerHTML = `
       <div class="chat-message assistant-message">
         <div class="message-avatar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><rect x="4" y="8" width="16" height="12" rx="2"></rect><circle cx="9" cy="14" r="1"></circle><circle cx="15" cy="14" r="1"></circle></svg>
         </div>
         <div class="message-content">
-          <p>Welcome! I'm your grounded survey co-pilot. I have full context of your uploaded literature, generated outline, and review audit. Ask me anything about synthesizing papers, building taxonomy tables, or structuring your survey arguments.</p>
+          <p>Welcome! I'm your grounded survey co-pilot for <strong>${projName}</strong>${topicText}. I have full context of this project's uploaded literature, generated outline, and review audit. Ask me anything about synthesizing papers, building taxonomy tables, or structuring your survey arguments.</p>
         </div>
       </div>
     `;
@@ -140,12 +144,12 @@ export class ChatTabComponent {
   async clearChat() {
     const project = store.getState('currentProject');
     if (!project) return;
-    if (!confirm('Clear this chat conversation?')) return;
+    if (!confirm(`Clear chat conversation for "${project.name}"?`)) return;
 
     try {
       await api.clearChat(project.id);
       store.setState('chatMessages', []);
-      showToast('Chat history cleared', 'info');
+      showToast('Project chat history cleared', 'info');
     } catch (err) {
       console.error(err);
     }

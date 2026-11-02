@@ -2559,6 +2559,29 @@ body {
   gap: 10px;
 }
 
+.floating-chat-clear-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, color 0.15s ease;
+}
+
+.floating-chat-clear-btn:hover {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+.floating-chat-clear-btn:active {
+  transform: scale(0.9);
+}
+
 .floating-chat-close-btn {
   width: 28px;
   height: 28px;

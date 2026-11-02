@@ -15,7 +15,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
 
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=1.2">
 
   <!-- CodeMirror 5 (cdnjs) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
@@ -351,7 +351,6 @@
                 <div class="preview-header-bar">
                   <div class="preview-header-left">
                     <span id="pdfPageLabel" class="pdf-header-label">Page 1 of 1</span>
-                    <span id="pdfStandardLabel" class="pdf-badge-label">IEEE STANDARD LETTER</span>
                   </div>
                   <div class="preview-header-controls">
                     <button type="button" id="btnPdfZoomOut" class="preview-control-btn" title="Zoom Out">−</button>
@@ -655,7 +654,12 @@
               <div class="sam-benchmark-header">
                 <div class="sam-benchmark-title-wrap">
                   <div class="sam-badge">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
+                      <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                      </polygon>
+                    </svg>
                     <span>SurveyBench SAM Benchmark</span>
                   </div>
                   <h3>Multi-Dimensional Survey Assessment</h3>
@@ -676,7 +680,9 @@
                     </div>
                     <span class="sam-pillar-val" id="samRScore">--</span>
                   </div>
-                  <div class="sam-progress-bar"><div class="sam-progress-fill" id="samRBar" style="width: 0%;"></div></div>
+                  <div class="sam-progress-bar">
+                    <div class="sam-progress-fill" id="samRBar" style="width: 0%;"></div>
+                  </div>
                   <div class="sam-pillar-stats">
                     <div class="sam-stat-item">
                       <span class="sam-stat-label">Corpus Coverage</span>
@@ -698,7 +704,9 @@
                     </div>
                     <span class="sam-pillar-val" id="samOScore">--</span>
                   </div>
-                  <div class="sam-progress-bar"><div class="sam-progress-fill" id="samOBar" style="width: 0%;"></div></div>
+                  <div class="sam-progress-bar">
+                    <div class="sam-progress-fill" id="samOBar" style="width: 0%;"></div>
+                  </div>
                   <div class="sam-pillar-stats">
                     <div class="sam-stat-item">
                       <span class="sam-stat-label">Core Pillars</span>
@@ -720,7 +728,9 @@
                     </div>
                     <span class="sam-pillar-val" id="samCScore">--</span>
                   </div>
-                  <div class="sam-progress-bar"><div class="sam-progress-fill" id="samCBar" style="width: 0%;"></div></div>
+                  <div class="sam-progress-bar">
+                    <div class="sam-progress-fill" id="samCBar" style="width: 0%;"></div>
+                  </div>
                   <div class="sam-pillar-stats">
                     <div class="sam-stat-item">
                       <span class="sam-stat-label">Comparative Links</span>
@@ -823,6 +833,89 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- Floating AI Research Co-Pilot Trigger & Apple Translucent Half-Screen Sheet (Inside Project Workspace Only) -->
+      <div id="floatingChatWrapper" class="floating-chat-wrapper">
+        <!-- Floating Trigger Icon Button -->
+        <button id="btnFloatingChatTrigger" class="floating-chat-trigger"
+          title="Open AI Research Co-Pilot (Live Chat & Citation Assistant)">
+          <div class="floating-chat-icon-inner">
+            <svg class="icon-chat-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
+              <circle cx="12" cy="10" r="1" fill="currentColor"></circle>
+              <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
+            </svg>
+            <svg class="icon-chat-close hidden" width="22" height="22" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </div>
+          <span class="floating-chat-tooltip">AI Co-Pilot</span>
+        </button>
+
+        <!-- Half-Screen Slide-Over Sheet Window -->
+        <aside id="floatingChatDrawer" class="floating-chat-drawer hidden" aria-label="Live AI Research Co-Pilot">
+          <div class="floating-chat-header">
+            <div class="floating-chat-title-group">
+              <div class="floating-chat-avatar">✦</div>
+              <div>
+                <div class="floating-chat-title">Live AI Research Co-Pilot</div>
+                <div class="floating-chat-subtitle" id="floatingChatSubtitle">Context-grounded survey paper assistant
+                </div>
+              </div>
+            </div>
+            <div class="floating-chat-header-actions">
+              <button id="btnClearFloatingChat" class="floating-chat-clear-btn" title="Clear project chat thread">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+              <button id="btnCloseFloatingChat" class="floating-chat-close-btn" title="Close chat window">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="floating-chat-quick-chips">
+            <button type="button" class="docked-chip"
+              data-prompt="Synthesize the primary methodology comparison for my current section.">Synthesize
+              methods</button>
+            <button type="button" class="docked-chip"
+              data-prompt="Find literature citations to support a claim on retrieval accuracy.">Find citations</button>
+            <button type="button" class="docked-chip"
+              data-prompt="Suggest a transition between background and technical taxonomy.">Transition help</button>
+            <button type="button" class="docked-chip"
+              data-prompt="Format an IEEE style comparison table for these algorithms.">Table snippet</button>
+          </div>
+
+          <div id="dockedChatMessages" class="floating-chat-messages">
+            <div class="chat-message assistant-message">
+              <div class="message-avatar">✦</div>
+              <div class="message-content">
+                <p>Welcome! I'm your research co-pilot. I have full context of your uploaded papers, generated taxonomy
+                  outline, and drafts.</p>
+                <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Ask me for literature citations,
+                  taxonomy comparisons, or LaTeX math equations anytime.</p>
+              </div>
+            </div>
+          </div>
+
+          <form id="dockedChatForm" class="floating-chat-form">
+            <input type="text" id="dockedChatInput" placeholder="Ask AI co-pilot for citations, synthesis, or LaTeX..."
+              autocomplete="off" />
+            <button type="submit" id="btnSendDockedChat" class="btn btn-primary btn-sm">Send</button>
+          </form>
+        </aside>
       </div>
     </section>
   </main>
@@ -1032,82 +1125,9 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Floating AI Research Co-Pilot Trigger & Apple Translucent Half-Screen Sheet -->
-  <div id="floatingChatWrapper" class="floating-chat-wrapper">
-    <!-- Floating Trigger Icon Button -->
-    <button id="btnFloatingChatTrigger" class="floating-chat-trigger"
-      title="Open AI Research Co-Pilot (Live Chat & Citation Assistant)">
-      <div class="floating-chat-icon-inner">
-        <svg class="icon-chat-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
-          <circle cx="12" cy="10" r="1" fill="currentColor"></circle>
-          <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
-        </svg>
-        <svg class="icon-chat-close hidden" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </div>
-      <span class="floating-chat-tooltip">AI Co-Pilot</span>
-    </button>
 
-    <!-- Half-Screen Slide-Over Sheet Window -->
-    <aside id="floatingChatDrawer" class="floating-chat-drawer hidden" aria-label="Live AI Research Co-Pilot">
-      <div class="floating-chat-header">
-        <div class="floating-chat-title-group">
-          <div class="floating-chat-avatar">✦</div>
-          <div>
-            <div class="floating-chat-title">Live AI Research Co-Pilot</div>
-            <div class="floating-chat-subtitle">Context-grounded survey paper assistant</div>
-          </div>
-        </div>
-        <div class="floating-chat-header-actions">
-          <button id="btnCloseFloatingChat" class="floating-chat-close-btn" title="Close chat window">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-      </div>
 
-      <div class="floating-chat-quick-chips">
-        <button type="button" class="docked-chip"
-          data-prompt="Synthesize the primary methodology comparison for my current section.">Synthesize
-          methods</button>
-        <button type="button" class="docked-chip"
-          data-prompt="Find literature citations to support a claim on retrieval accuracy.">Find citations</button>
-        <button type="button" class="docked-chip"
-          data-prompt="Suggest a transition between background and technical taxonomy.">Transition help</button>
-        <button type="button" class="docked-chip"
-          data-prompt="Format an IEEE style comparison table for these algorithms.">Table snippet</button>
-      </div>
-
-      <div id="dockedChatMessages" class="floating-chat-messages">
-        <div class="chat-message assistant-message">
-          <div class="message-avatar">✦</div>
-          <div class="message-content">
-            <p>Welcome! I'm your research co-pilot. I have full context of your uploaded papers, generated taxonomy
-              outline, and drafts.</p>
-            <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Ask me for literature citations,
-              taxonomy comparisons, or LaTeX math equations anytime.</p>
-          </div>
-        </div>
-      </div>
-
-      <form id="dockedChatForm" class="floating-chat-form">
-        <input type="text" id="dockedChatInput" placeholder="Ask AI co-pilot for citations, synthesis, or LaTeX..."
-          autocomplete="off" />
-        <button type="submit" id="btnSendDockedChat" class="btn btn-primary btn-sm">Send</button>
-      </form>
-    </aside>
-  </div>
-
-  <script type="module" src="/static/js/main.js"></script>
+  <script type="module" src="/static/js/main.js?v=1.2"></script>
 </body>
 
 </html>
