@@ -2264,6 +2264,7 @@ body {
   flex-direction: column;
   flex: 1 1 50%;
   min-width: 280px;
+  min-height: 0;
   height: 100%;
   background: #23272e;
   position: relative;
@@ -2340,13 +2341,53 @@ body {
 
 .latex-compiled-view {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: auto;
-  padding: 20px;
+  overscroll-behavior: contain;
+  padding: 24px 16px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: #282c34;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #555 #1e2227;
+}
+
+.latex-compiled-view::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.latex-compiled-view::-webkit-scrollbar-track {
+  background: #1e2227;
+}
+
+.latex-compiled-view::-webkit-scrollbar-thumb {
+  background: #4b5263;
+  border-radius: 4px;
+}
+
+.latex-compiled-view::-webkit-scrollbar-thumb:hover {
+  background: #5c6370;
+}
+
+.pdf-container-inner {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-container-inner iframe {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  border: none;
 }
 
 .shimmer-loading {
@@ -3079,10 +3120,15 @@ body {
 .latex-compiled-view {
   width: 100%;
   flex: 1;
-  overflow: hidden;
-  background: #3a3a3a;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  overscroll-behavior: contain;
+  background: #282c34;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .latex-compiled-placeholder {
@@ -3360,8 +3406,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  max-width: 820px;
+  width: auto;
+  max-width: 100%;
 }
 
 .latex-pdf-page-sheet {
