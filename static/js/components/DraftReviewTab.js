@@ -19,6 +19,23 @@ export class DraftReviewTabComponent {
     this.btnOpenSubmitModal = $('#btnSubmitDraftModal');
     this.filterChips = $$('.filter-chip');
 
+    // SAM (Survey Assessment Metrics) Elements
+    this.samCard = $('#samBenchmarkCard');
+    this.samCompositeTier = $('#samCompositeTier');
+    this.samCompositeScore = $('#samCompositeScore');
+    this.samRScore = $('#samRScore');
+    this.samRBar = $('#samRBar');
+    this.samRCoverage = $('#samRCoverage');
+    this.samRDensity = $('#samRDensity');
+    this.samOScore = $('#samOScore');
+    this.samOBar = $('#samOBar');
+    this.samOPillars = $('#samOPillars');
+    this.samODepth = $('#samODepth');
+    this.samCScore = $('#samCScore');
+    this.samCBar = $('#samCBar');
+    this.samCSynthesis = $('#samCSynthesis');
+    this.samCTable = $('#samCTable');
+
     this.currentFilter = 'all';
 
     this.init();
@@ -63,6 +80,21 @@ export class DraftReviewTabComponent {
       this.metricOverlapRisk.textContent = 'Local paper overlap';
       this.badgeCritCount.textContent = '0 Critical';
       this.badgeWarnCount.textContent = '0 Warnings';
+
+      if (this.samCompositeTier) this.samCompositeTier.textContent = 'Tier --';
+      if (this.samCompositeScore) this.samCompositeScore.textContent = '-- / 100';
+      if (this.samRScore) this.samRScore.textContent = '--';
+      if (this.samRBar) this.samRBar.style.width = '0%';
+      if (this.samRCoverage) this.samRCoverage.textContent = '--%';
+      if (this.samRDensity) this.samRDensity.textContent = '-- / 1k w';
+      if (this.samOScore) this.samOScore.textContent = '--';
+      if (this.samOBar) this.samOBar.style.width = '0%';
+      if (this.samOPillars) this.samOPillars.textContent = '-- / 6';
+      if (this.samODepth) this.samODepth.textContent = '--';
+      if (this.samCScore) this.samCScore.textContent = '--';
+      if (this.samCBar) this.samCBar.style.width = '0%';
+      if (this.samCSynthesis) this.samCSynthesis.textContent = '--';
+      if (this.samCTable) this.samCTable.textContent = '--';
 
       this.issuesList.innerHTML = `
         <div class="empty-state">
@@ -109,6 +141,30 @@ export class DraftReviewTabComponent {
 
     this.badgeCritCount.textContent = `${critCount} Critical`;
     this.badgeWarnCount.textContent = `${warnCount} Warnings`;
+
+    // Render SurveyBench SAM Benchmark Metrics
+    const sam = review.sam || {};
+    const samR = sam.sam_r || {};
+    const samO = sam.sam_o || {};
+    const samC = sam.sam_c || {};
+
+    if (this.samCompositeTier) this.samCompositeTier.textContent = sam.tier || 'Benchmark Pending';
+    if (this.samCompositeScore) this.samCompositeScore.textContent = `${sam.composite != null ? sam.composite : '--'} / 100`;
+
+    if (this.samRScore) this.samRScore.textContent = `${samR.score != null ? samR.score : '--'}`;
+    if (this.samRBar) this.samRBar.style.width = `${Math.min(samR.score || 0, 100)}%`;
+    if (this.samRCoverage) this.samRCoverage.textContent = `${samR.coverage_pct != null ? samR.coverage_pct : '--'}%`;
+    if (this.samRDensity) this.samRDensity.textContent = `${samR.citation_density != null ? samR.citation_density : '--'} / 1k w`;
+
+    if (this.samOScore) this.samOScore.textContent = `${samO.score != null ? samO.score : '--'}`;
+    if (this.samOBar) this.samOBar.style.width = `${Math.min(samO.score || 0, 100)}%`;
+    if (this.samOPillars) this.samOPillars.textContent = `${samO.pillars_count != null ? samO.pillars_count : '--'} / 6`;
+    if (this.samODepth) this.samODepth.textContent = `${samO.hierarchy_depth || '--'}`;
+
+    if (this.samCScore) this.samCScore.textContent = `${samC.score != null ? samC.score : '--'}`;
+    if (this.samCBar) this.samCBar.style.width = `${Math.min(samC.score || 0, 100)}%`;
+    if (this.samCSynthesis) this.samCSynthesis.textContent = `${samC.comparative_links != null ? samC.comparative_links : '--'} links`;
+    if (this.samCTable) this.samCTable.textContent = `${samC.table_status || (samC.has_table ? 'Present' : 'Missing')}`;
 
     // Render Issues List
     this.issuesList.innerHTML = '';

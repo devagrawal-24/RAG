@@ -12,6 +12,7 @@ import { SummariesTabComponent } from './components/SummariesTab.js';
 import { DraftReviewTabComponent } from './components/DraftReviewTab.js';
 import { DraftEditorTabComponent } from './components/DraftEditorTab.js';
 import { ChatTabComponent } from './components/ChatTab.js';
+import { FloatingChatComponent } from './components/FloatingChat.js';
 import { ModalsManager } from './components/Modals.js';
 
 class SurveyApp {
@@ -91,6 +92,7 @@ class SurveyApp {
     });
 
     this.chatTab = new ChatTabComponent();
+    this.floatingChat = new FloatingChatComponent();
   }
 
   setupTabNavigation() {

@@ -343,7 +343,9 @@ async def api_audit_draft(
         raise HTTPException(status_code=400, detail="Insufficient content to review. Please submit at least a few paragraphs (min 20 words).")
 
     source_chunks = get_project_chunks(project_id)
-    audit_results = audit_draft(extracted_draft, source_chunks)
+    papers = list_papers(project_id)
+    outline = get_outline(project_id)
+    audit_results = audit_draft(extracted_draft, source_chunks, papers=papers, outline=outline)
 
     saved = save_draft_review(
         project_id=project_id,
@@ -351,9 +353,10 @@ async def api_audit_draft(
         draft_text=extracted_draft,
         readability=audit_results["readability"],
         issues=audit_results["issues"],
-        overlap=audit_results["overlap"]
+        overlap=audit_results["overlap"],
+        sam=audit_results.get("sam", {})
     )
-    return {**saved, "health_score": audit_results["health_score"]}
+    return {**saved, "health_score": audit_results["health_score"], "sam": audit_results.get("sam", {})}
 
 @app.get("/api/projects/{project_id}/reviews")
 def api_list_draft_reviews(project_id: str):
@@ -514,9 +517,11 @@ async def api_compile_latex_draft(project_id: str, req: LatexCompileReq):
     # 2. Compile HTML preview as fallback/inspector
     html_res = compile_latex_to_html(latex_src)
 
-    # 3. Run full pedagogical audit
+    # 3. Run full pedagogical audit with SurveyBench SAM evaluation
     source_chunks = get_project_chunks(project_id)
-    audit_results = audit_draft(latex_src, source_chunks)
+    papers = list_papers(project_id)
+    outline = get_outline(project_id)
+    audit_results = audit_draft(latex_src, source_chunks, papers=papers, outline=outline)
 
     pdf_url = None
     pdf_base64 = None
@@ -542,6 +547,7 @@ async def api_compile_latex_draft(project_id: str, req: LatexCompileReq):
         "readability": audit_results["readability"],
         "issues": audit_results["issues"],
         "overlap": audit_results["overlap"],
+        "sam": audit_results.get("sam", {}),
     }
 
 # ----------------- Project Co-Pilot Chat Endpoints -----------------

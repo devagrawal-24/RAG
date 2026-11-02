@@ -143,6 +143,11 @@ def init_db():
         if "legacy_markdown" not in cols:
             conn.execute("ALTER TABLE project_drafts ADD COLUMN legacy_markdown TEXT DEFAULT ''")
 
+        # Backward compatibility migration for draft_reviews (SAM benchmark)
+        dr_cols = [c[1] for c in conn.execute("PRAGMA table_info(draft_reviews)").fetchall()]
+        if "sam_json" not in dr_cols:
+            conn.execute("ALTER TABLE draft_reviews ADD COLUMN sam_json TEXT DEFAULT '{}'")
+
         conn.execute("""
         CREATE TABLE IF NOT EXISTS chat_messages (
             id TEXT PRIMARY KEY,
@@ -523,7 +528,8 @@ def save_summary(project_id: str, summary_type: str, paper_id: Optional[str] = N
     return sid
 
 def save_draft_review(project_id: str, draft_title: str, draft_text: str,
-                      readability: Dict[str, Any], issues: List[Dict[str, Any]], overlap: Dict[str, Any]) -> Dict[str, Any]:
+                      readability: Dict[str, Any], issues: List[Dict[str, Any]], overlap: Dict[str, Any],
+                      sam: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     conn = get_db_connection()
     rid = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
@@ -532,9 +538,9 @@ def save_draft_review(project_id: str, draft_title: str, draft_text: str,
 
     with conn:
         conn.execute("""
-            INSERT INTO draft_reviews (id, project_id, version, draft_title, draft_text, readability_json, issues_json, overlap_json, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (rid, project_id, version, draft_title, draft_text, json.dumps(readability), json.dumps(issues), json.dumps(overlap), now))
+            INSERT INTO draft_reviews (id, project_id, version, draft_title, draft_text, readability_json, issues_json, overlap_json, sam_json, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (rid, project_id, version, draft_title, draft_text, json.dumps(readability), json.dumps(issues), json.dumps(overlap), json.dumps(sam or {}), now))
     conn.close()
     touch_project(project_id)
     return get_draft_review(rid)
@@ -549,6 +555,7 @@ def get_draft_review(review_id: str) -> Optional[Dict[str, Any]]:
     d["readability"] = json.loads(d.get("readability_json") or "{}")
     d["issues"] = json.loads(d.get("issues_json") or "[]")
     d["overlap"] = json.loads(d.get("overlap_json") or "{}")
+    d["sam"] = json.loads(d.get("sam_json") or "{}")
     return d
 
 def list_draft_reviews(project_id: str) -> List[Dict[str, Any]]:
@@ -561,6 +568,7 @@ def list_draft_reviews(project_id: str) -> List[Dict[str, Any]]:
         d["readability"] = json.loads(d.get("readability_json") or "{}")
         d["issues"] = json.loads(d.get("issues_json") or "[]")
         d["overlap"] = json.loads(d.get("overlap_json") or "{}")
+        d["sam"] = json.loads(d.get("sam_json") or "{}")
         results.append(d)
     return results
 

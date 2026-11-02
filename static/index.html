@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Survey Paper AI-Assistant</title>
-  <meta name="description" content="Next-generation literature synthesis, structural outline induction, and draft auditor copilot grounded in scientific corpora.">
-  
+  <meta name="description"
+    content="Next-generation literature synthesis, structural outline induction, and draft auditor copilot grounded in scientific corpora.">
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
   <link rel="stylesheet" href="/static/styles.css">
-  
+
   <!-- CodeMirror 5 (cdnjs) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
@@ -47,13 +51,15 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
     onload="if(window.renderMathInElement)window.__katexReady=true;"></script>
 </head>
+
 <body class="light-theme">
   <!-- Top App Navigation -->
   <header class="app-header">
     <div class="header-left">
       <div class="logo-group">
         <div class="logo-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M12 2a10 10 0 0 0-7.07 17.07"></path>
             <path d="M12 22a10 10 0 0 0 7.07-17.07"></path>
@@ -68,24 +74,34 @@
       <div id="projectHeaderBreadcrumb" class="project-breadcrumb hidden">
         <span class="crumb-separator">/</span>
         <span id="headerProjectName" class="crumb-project-name">Project Name</span>
-        <span id="headerProjectStatus" class="badge badge-active">Active</span>
       </div>
     </div>
 
     <div class="header-right">
       <div id="workspaceActions" class="header-actions hidden">
         <button id="btnExportProject" class="btn btn-secondary btn-sm" title="Export Survey Starter Kit">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
           Export Dossier
         </button>
       </div>
 
       <button id="btnOpenSettings" class="btn btn-icon" title="AI Model & API Key Settings">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
       </button>
 
       <button id="btnBackToDashboard" class="btn btn-outline btn-sm hidden">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
         All Projects
       </button>
     </div>
@@ -93,16 +109,20 @@
 
   <!-- Main App Shell -->
   <main class="app-main">
-    
+
     <!-- VIEW 1: DASHBOARD -->
     <section id="viewDashboard" class="view active-view">
       <div class="dashboard-hero">
         <div class="hero-content">
           <h1>The <span class="accent-text">Survey Paper AI-Assistant</span></h1>
-          <p>Ground your taxonomy, induce cohesive outlines, synthesize multi-document literature, and audit your drafts with verified page-level provenance.</p>
+          <p>Ground your taxonomy, induce cohesive outlines, synthesize multi-document literature, and audit your drafts
+            with verified page-level provenance.</p>
           <div class="hero-cta">
             <button id="btnNewProjectModal" class="btn btn-primary btn-lg">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
               Create New Survey Project
             </button>
           </div>
@@ -121,10 +141,16 @@
 
         <div id="dashboardEmptyState" class="empty-state hidden">
           <div class="empty-state-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
           </div>
           <h3>No survey projects yet</h3>
-          <p>Start by creating a project for your literature review topic. You can then upload up to 30 scientific PDFs to automatically generate structured outlines and reviews.</p>
+          <p>Start by creating a project for your literature review topic. You can then upload up to 30 scientific PDFs
+            to automatically generate structured outlines and reviews.</p>
           <button id="btnEmptyCreate" class="btn btn-primary">Create Your First Project</button>
         </div>
       </div>
@@ -136,48 +162,79 @@
       <nav class="workspace-tabs-nav">
         <div class="tabs-list">
           <button class="tab-btn active" data-tab="tabDraftEditor">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
             Draft Studio
             <span class="tab-badge" style="background:rgba(79, 70, 229, 0.12); color:#4338ca;">IDE</span>
           </button>
           <button class="tab-btn" data-tab="tabPapers">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
             Literature Papers
             <span id="tabPapersCount" class="tab-badge">0</span>
           </button>
           <button class="tab-btn" data-tab="tabOutline">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
             Grounded Outline
           </button>
           <button class="tab-btn" data-tab="tabSummaries">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
             Summaries & Synthesis
           </button>
           <button class="tab-btn" data-tab="tabReview">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
             Review & Auditor
           </button>
           <button class="tab-btn" data-tab="tabChat">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
             AI Co-Pilot (Full)
           </button>
         </div>
       </nav>
 
       <div class="workspace-content-container">
-        
+
         <!-- TAB 0: DRAFT STUDIO IDE (TEXT EDITOR + LIVE CHAT + TERMINAL) -->
         <div id="tabDraftEditor" class="tab-pane active">
           <div class="draft-studio-container">
             <!-- Markdown Detection Banner -->
             <div id="draftMarkdownBanner" class="draft-notice-banner hidden">
               <div class="draft-notice-left">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
                 <span>This looks like Markdown. Convert it to IEEE LaTeX for two-column compilation.</span>
               </div>
               <div class="draft-notice-actions">
-                <button type="button" id="btnConvertBannerAction" class="btn btn-primary btn-xs">Convert to LaTeX</button>
-                <button type="button" id="btnCompileAnywayBannerAction" class="btn btn-outline btn-xs">Compile anyway</button>
+                <button type="button" id="btnConvertBannerAction" class="btn btn-primary btn-xs">Convert to
+                  LaTeX</button>
+                <button type="button" id="btnCompileAnywayBannerAction" class="btn btn-outline btn-xs">Compile
+                  anyway</button>
                 <button type="button" id="btnDismissBannerAction" class="btn btn-icon btn-xs" title="Dismiss">✕</button>
               </div>
             </div>
@@ -186,14 +243,19 @@
             <div class="studio-toolbar">
               <div class="studio-toolbar-left">
                 <div class="draft-title-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-                  <input type="text" id="draftDocTitle" value="main.tex" placeholder="Document Title (.tex)" class="draft-title-input" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  </svg>
+                  <input type="text" id="draftDocTitle" value="main.tex" placeholder="Document Title (.tex)"
+                    class="draft-title-input" />
                 </div>
                 <span id="draftSaveIndicator" class="draft-save-pill"><span class="pulse-dot"></span> Saved</span>
                 <span id="draftCompileStatusChip" class="draft-stat-chip compile-chip">Not compiled</span>
-                <span id="draftWordCountBadge" class="draft-stat-chip" title="Words excluding LaTeX commands, comments, and math">0 words</span>
+                <span id="draftWordCountBadge" class="draft-stat-chip"
+                  title="Words excluding LaTeX commands, comments, and math">0 words</span>
                 <span id="draftCharCountBadge" class="draft-stat-chip">0 chars</span>
-                <span id="draftBibChip" class="draft-stat-chip bib-chip" title="Click to view references.bib preview">references.bib · 0 entries</span>
+                <span id="draftBibChip" class="draft-stat-chip bib-chip"
+                  title="Click to view references.bib preview">references.bib · 0 entries</span>
               </div>
 
               <div class="studio-toolbar-right">
@@ -209,16 +271,27 @@
                   </select>
                 </div>
 
-                <button id="btnInsertOutlineSkeleton" class="btn btn-outline btn-sm" title="Insert sections from Grounded Outline into the editor">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
+                <button id="btnInsertOutlineSkeleton" class="btn btn-outline btn-sm"
+                  title="Insert sections from Grounded Outline into the editor">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                  </svg>
                   Insert LaTeX Outline
                 </button>
                 <button id="btnToggleTerminal" class="btn btn-outline btn-sm" title="Toggle Terminal Output">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="4 17 10 11 4 5"></polyline>
+                    <line x1="12" y1="19" x2="20" y2="19"></line>
+                  </svg>
                   Terminal & Output
                 </button>
-                <button id="btnCompileDraftReview" class="btn btn-compile btn-sm" title="Audit & Compile Draft (Ctrl+Enter)">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <button id="btnCompileDraftReview" class="btn btn-compile btn-sm"
+                  title="Audit & Compile Draft (Ctrl+Enter)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
                   <span>Audit & Compile Draft</span>
                   <kbd class="kbd-badge">Ctrl+Enter</kbd>
                 </button>
@@ -228,16 +301,26 @@
             <!-- Dedicated LaTeX IDE Editing Toolbar -->
             <div class="latex-toolbar">
               <span class="latex-toolbar-label">LaTeX Tools:</span>
-              <button type="button" class="btn-latex-tool" data-latex="section" title="Insert \section{}">\section</button>
-              <button type="button" class="btn-latex-tool" data-latex="subsection" title="Insert \subsection{}">\subsection</button>
-              <button type="button" class="btn-latex-tool" data-latex="textbf" title="Bold text \textbf{} (Ctrl+B)">\textbf</button>
-              <button type="button" class="btn-latex-tool" data-latex="textit" title="Italic text \textit{} (Ctrl+I)">\textit</button>
-              <button type="button" class="btn-latex-tool" data-latex="itemize" title="Insert itemize list">\begin{itemize}</button>
-              <button type="button" class="btn-latex-tool" data-latex="table" title="Insert LaTeX table">\begin{table}</button>
-              <button type="button" class="btn-latex-tool" data-latex="equation" title="Insert LaTeX equation">\begin{equation}</button>
-              <button type="button" class="btn-latex-tool" data-latex="cite" title="Insert citation \cite{}">\cite</button>
-              <button type="button" id="btnConvertMarkdownToolbar" class="btn-latex-tool btn-convert-md" title="Convert Markdown headings and formatting to LaTeX">Convert Markdown to LaTeX</button>
-              <button type="button" id="btnLoadLatexTemplate" class="btn-latex-tool btn-template" title="Populate complete IEEE survey paper LaTeX template">Load LaTeX Template</button>
+              <button type="button" class="btn-latex-tool" data-latex="section"
+                title="Insert \section{}">\section</button>
+              <button type="button" class="btn-latex-tool" data-latex="subsection"
+                title="Insert \subsection{}">\subsection</button>
+              <button type="button" class="btn-latex-tool" data-latex="textbf"
+                title="Bold text \textbf{} (Ctrl+B)">\textbf</button>
+              <button type="button" class="btn-latex-tool" data-latex="textit"
+                title="Italic text \textit{} (Ctrl+I)">\textit</button>
+              <button type="button" class="btn-latex-tool" data-latex="itemize"
+                title="Insert itemize list">\begin{itemize}</button>
+              <button type="button" class="btn-latex-tool" data-latex="table"
+                title="Insert LaTeX table">\begin{table}</button>
+              <button type="button" class="btn-latex-tool" data-latex="equation"
+                title="Insert LaTeX equation">\begin{equation}</button>
+              <button type="button" class="btn-latex-tool" data-latex="cite"
+                title="Insert citation \cite{}">\cite</button>
+              <button type="button" id="btnConvertMarkdownToolbar" class="btn-latex-tool btn-convert-md"
+                title="Convert Markdown headings and formatting to LaTeX">Convert Markdown to LaTeX</button>
+              <button type="button" id="btnLoadLatexTemplate" class="btn-latex-tool btn-template"
+                title="Populate complete IEEE survey paper LaTeX template">Load LaTeX Template</button>
             </div>
 
             <!-- Main Split Workspace: Left Editor + Resizer + Right Live Preview Pane -->
@@ -249,14 +332,18 @@
                 <div class="editor-status-bar">
                   <span id="editorCursorPosition" class="status-item">Ln 1, Col 1</span>
                   <span id="editorSelectionLength" class="status-item hidden">0 sel</span>
-                  <button type="button" id="btnToggleWordWrap" class="status-btn" title="Toggle Word Wrap">Wrap: On</button>
-                  <button type="button" id="btnVersionHistory" class="status-btn" title="Version History (Autosaves)">History (10)</button>
-                  <button type="button" id="btnEditorShortcutsHelp" class="status-btn" title="Keyboard Shortcuts">?</button>
+                  <button type="button" id="btnToggleWordWrap" class="status-btn" title="Toggle Word Wrap">Wrap:
+                    On</button>
+                  <button type="button" id="btnVersionHistory" class="status-btn"
+                    title="Version History (Autosaves)">History (10)</button>
+                  <button type="button" id="btnEditorShortcutsHelp" class="status-btn"
+                    title="Keyboard Shortcuts">?</button>
                 </div>
               </div>
 
               <!-- Resizable Split Handle -->
-              <div id="studioSplitResizer" class="studio-split-resizer" title="Drag to resize split pane, double-click to reset"></div>
+              <div id="studioSplitResizer" class="studio-split-resizer"
+                title="Drag to resize split pane, double-click to reset"></div>
 
               <!-- Right: Live Compiled LaTeX & PDF Preview Pane -->
               <div id="previewSplitPane" class="editor-preview-pane">
@@ -271,20 +358,29 @@
                     <span id="pdfZoomLabel" class="pdf-zoom-val">100%</span>
                     <button type="button" id="btnPdfZoomIn" class="preview-control-btn" title="Zoom In">+</button>
                     <button type="button" id="btnDownloadPdf" class="preview-control-btn" title="Download compiled PDF">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
                     </button>
                   </div>
                 </div>
 
                 <div id="latexCompiledView" class="latex-compiled-view">
                   <div class="latex-compiled-placeholder">
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #0071e3; opacity: 0.85;">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/>
-                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" style="color: #0071e3; opacity: 0.85;">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
                     </svg>
-                    <p style="color:var(--text-secondary);margin:0;font-weight:500;">Click <strong style="color:var(--primary);">"Audit &amp; Compile Draft"</strong> or press <strong style="color:var(--primary);">Ctrl+Enter</strong><br>to render your compiled IEEE LaTeX preview side-by-side.</p>
+                    <p style="color:var(--text-secondary);margin:0;font-weight:500;">Click <strong
+                        style="color:var(--primary);">"Audit &amp; Compile Draft"</strong> or press <strong
+                        style="color:var(--primary);">Ctrl+Enter</strong><br>to render your compiled IEEE LaTeX preview
+                      side-by-side.</p>
                   </div>
                 </div>
               </div>
@@ -295,15 +391,25 @@
               <div class="terminal-drawer-header">
                 <div class="terminal-tabs">
                   <button class="terminal-tab-btn active" data-term-tab="termProblems">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
                     PROBLEMS <span id="termProblemsCount" class="terminal-count-badge">0</span>
                   </button>
                   <button class="terminal-tab-btn" data-term-tab="termLog">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="8" y1="6" x2="21" y2="6"></line>
+                      <line x1="8" y1="12" x2="21" y2="12"></line>
+                      <line x1="8" y1="18" x2="21" y2="18"></line>
+                    </svg>
                     LOG
                   </button>
                   <button class="terminal-tab-btn" data-term-tab="termAudit">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
                     AUDIT & HEALTH
                   </button>
                 </div>
@@ -318,7 +424,8 @@
                 <!-- Tab 1: Problems -->
                 <div id="termProblems" class="term-tab-pane">
                   <div id="termProblemsList" class="term-problems-list">
-                    <div class="term-empty-message">No diagnostics compiled yet. Click <strong>"Audit & Compile Draft"</strong> or press <strong>Ctrl+Enter</strong> to analyze your draft.</div>
+                    <div class="term-empty-message">No diagnostics compiled yet. Click <strong>"Audit & Compile
+                        Draft"</strong> or press <strong>Ctrl+Enter</strong> to analyze your draft.</div>
                   </div>
                 </div>
 
@@ -360,17 +467,23 @@
           <div class="pane-header-row">
             <div>
               <h2>Ingested Scientific Papers</h2>
-              <p class="text-muted">Upload and inspect PDFs from IEEE, ACM, arXiv. Text and structure are extracted with layout-aware boundary parsing.</p>
+              <p class="text-muted">Upload and inspect PDFs from IEEE, ACM, arXiv. Text and structure are extracted with
+                layout-aware boundary parsing.</p>
             </div>
           </div>
 
           <!-- Drag and Drop Upload Area -->
           <div id="paperDropZone" class="drop-zone">
             <div class="drop-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
             </div>
             <h3>Drag & Drop research PDFs here, or <span class="browse-link">browse files</span></h3>
-            <p class="drop-help-text">Supports multiple PDFs. Auto-detects titles, authors, abstracts, sections, and duplicate uploads.</p>
+            <p class="drop-help-text">Supports multiple PDFs. Auto-detects titles, authors, abstracts, sections, and
+              duplicate uploads.</p>
             <input type="file" id="paperFileInput" multiple accept=".pdf" class="file-input-hidden">
           </div>
 
@@ -409,15 +522,23 @@
           <div class="pane-header-row">
             <div>
               <h2>Grounded Survey Paper Outline</h2>
-              <p class="text-muted">Induces thematic taxonomy clusters, comparative matrices, and open challenge structures grounded in your uploaded papers.</p>
+              <p class="text-muted">Induces thematic taxonomy clusters, comparative matrices, and open challenge
+                structures grounded in your uploaded papers.</p>
             </div>
             <div class="pane-actions">
               <button id="btnRegenOutlineModal" class="btn btn-secondary">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
                 Regenerate with Guidance
               </button>
               <button id="btnAddSectionBtn" class="btn btn-outline">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
                 Add Section
               </button>
               <button id="btnSaveOutline" class="btn btn-primary">
@@ -440,11 +561,14 @@
           <div class="pane-header-row">
             <div>
               <h2>Multi-Document Summaries & Synthesis</h2>
-              <p class="text-muted">Individual structured 4-pillar paper breakdowns (Problem, Method, Findings, Limitations) and cross-paper comparative synthesis.</p>
+              <p class="text-muted">Individual structured 4-pillar paper breakdowns (Problem, Method, Findings,
+                Limitations) and cross-paper comparative synthesis.</p>
             </div>
             <div class="pane-actions">
               <button id="btnGenerateSummaries" class="btn btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
                 Generate / Refresh Summaries
               </button>
             </div>
@@ -464,7 +588,8 @@
             <div class="synthesis-card">
               <div id="combinedSummaryContent" class="markdown-body">
                 <div class="empty-card-placeholder">
-                  <p>Click <strong>"Generate / Refresh Summaries"</strong> to synthesize your uploaded literature into common ground, methodological divergences, and research gaps.</p>
+                  <p>Click <strong>"Generate / Refresh Summaries"</strong> to synthesize your uploaded literature into
+                    common ground, methodological divergences, and research gaps.</p>
                 </div>
               </div>
             </div>
@@ -482,11 +607,16 @@
           <div class="pane-header-row">
             <div>
               <h2>Pre-Submission Pedagogical Draft Review</h2>
-              <p class="text-muted">Automated verification of survey structure completeness, logical flow, citation coverage, readability scores, and local source overlap.</p>
+              <p class="text-muted">Automated verification of survey structure completeness, logical flow, citation
+                coverage, readability scores, and local source overlap.</p>
             </div>
             <div class="pane-actions">
               <button id="btnSubmitDraftModal" class="btn btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
                 Submit New Draft Version
               </button>
             </div>
@@ -520,6 +650,91 @@
               </div>
             </div>
 
+            <!-- SurveyBench SAM (Survey Assessment Metrics) Benchmark Card -->
+            <div class="sam-benchmark-card" id="samBenchmarkCard">
+              <div class="sam-benchmark-header">
+                <div class="sam-benchmark-title-wrap">
+                  <div class="sam-badge">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <span>SurveyBench SAM Benchmark</span>
+                  </div>
+                  <h3>Multi-Dimensional Survey Assessment</h3>
+                </div>
+                <div class="sam-composite-badge-wrap">
+                  <span class="sam-composite-tier" id="samCompositeTier">Tier --</span>
+                  <span class="sam-composite-score" id="samCompositeScore">-- / 100</span>
+                </div>
+              </div>
+
+              <div class="sam-pillars-grid">
+                <!-- Pillar 1: SAM-R (Reference Quality) -->
+                <div class="sam-pillar-card">
+                  <div class="sam-pillar-top">
+                    <div class="sam-pillar-name-wrap">
+                      <span class="sam-pillar-code">SAM-R</span>
+                      <span class="sam-pillar-label">Reference Quality</span>
+                    </div>
+                    <span class="sam-pillar-val" id="samRScore">--</span>
+                  </div>
+                  <div class="sam-progress-bar"><div class="sam-progress-fill" id="samRBar" style="width: 0%;"></div></div>
+                  <div class="sam-pillar-stats">
+                    <div class="sam-stat-item">
+                      <span class="sam-stat-label">Corpus Coverage</span>
+                      <strong id="samRCoverage">--%</strong>
+                    </div>
+                    <div class="sam-stat-item">
+                      <span class="sam-stat-label">Citation Density</span>
+                      <strong id="samRDensity">-- / 1k w</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pillar 2: SAM-O (Outline Quality) -->
+                <div class="sam-pillar-card">
+                  <div class="sam-pillar-top">
+                    <div class="sam-pillar-name-wrap">
+                      <span class="sam-pillar-code">SAM-O</span>
+                      <span class="sam-pillar-label">Outline Quality</span>
+                    </div>
+                    <span class="sam-pillar-val" id="samOScore">--</span>
+                  </div>
+                  <div class="sam-progress-bar"><div class="sam-progress-fill" id="samOBar" style="width: 0%;"></div></div>
+                  <div class="sam-pillar-stats">
+                    <div class="sam-stat-item">
+                      <span class="sam-stat-label">Core Pillars</span>
+                      <strong id="samOPillars">-- / 6</strong>
+                    </div>
+                    <div class="sam-stat-item">
+                      <span class="sam-stat-label">Hierarchy Depth</span>
+                      <strong id="samODepth">--</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pillar 3: SAM-C (Content Synthesis Quality) -->
+                <div class="sam-pillar-card">
+                  <div class="sam-pillar-top">
+                    <div class="sam-pillar-name-wrap">
+                      <span class="sam-pillar-code">SAM-C</span>
+                      <span class="sam-pillar-label">Content Synthesis</span>
+                    </div>
+                    <span class="sam-pillar-val" id="samCScore">--</span>
+                  </div>
+                  <div class="sam-progress-bar"><div class="sam-progress-fill" id="samCBar" style="width: 0%;"></div></div>
+                  <div class="sam-pillar-stats">
+                    <div class="sam-stat-item">
+                      <span class="sam-stat-label">Comparative Links</span>
+                      <strong id="samCSynthesis">--</strong>
+                    </div>
+                    <div class="sam-stat-item">
+                      <span class="sam-stat-label">Taxonomy Matrix</span>
+                      <strong id="samCTable">--</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Issues Filter Bar -->
             <div class="issues-filter-bar">
               <div class="filter-group">
@@ -547,7 +762,8 @@
           <div class="pane-header-row">
             <div>
               <h2>Project-Scoped Conversational Co-Pilot</h2>
-              <p class="text-muted">Chat with rolling project memory and hybrid RAG retrieval over your papers and outline. Every claim is attributed with verifiable page badges.</p>
+              <p class="text-muted">Chat with rolling project memory and hybrid RAG retrieval over your papers and
+                outline. Every claim is attributed with verifiable page badges.</p>
             </div>
             <div class="pane-actions">
               <button type="button" id="btnClearChat" class="btn btn-outline btn-sm">
@@ -560,29 +776,48 @@
             <!-- Suggested quick action prompt chips -->
             <div class="quick-prompts-bar">
               <span class="quick-label">Suggested Prompts:</span>
-              <button type="button" class="quick-chip" data-prompt="What are the key differences between the methods proposed in our uploaded papers?">Compare methodologies</button>
-              <button type="button" class="quick-chip" data-prompt="What open challenges should I emphasize for Section 5 of our survey?">Identify open challenges</button>
-              <button type="button" class="quick-chip" data-prompt="Synthesize the limitations reported across all uploaded papers.">Synthesize limitations</button>
-              <button type="button" class="quick-chip" data-prompt="Help me write a transition between Background and Taxonomy sections.">Draft section transition</button>
+              <button type="button" class="quick-chip"
+                data-prompt="What are the key differences between the methods proposed in our uploaded papers?">Compare
+                methodologies</button>
+              <button type="button" class="quick-chip"
+                data-prompt="What open challenges should I emphasize for Section 5 of our survey?">Identify open
+                challenges</button>
+              <button type="button" class="quick-chip"
+                data-prompt="Synthesize the limitations reported across all uploaded papers.">Synthesize
+                limitations</button>
+              <button type="button" class="quick-chip"
+                data-prompt="Help me write a transition between Background and Taxonomy sections.">Draft section
+                transition</button>
             </div>
 
             <!-- Chat messages stream -->
             <div id="chatMessagesContainer" class="chat-messages-container">
               <div class="chat-message assistant-message">
                 <div class="message-avatar">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><rect x="4" y="8" width="16" height="12" rx="2"></rect><circle cx="9" cy="14" r="1"></circle><circle cx="15" cy="14" r="1"></circle></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
+                    <rect x="4" y="8" width="16" height="12" rx="2"></rect>
+                    <circle cx="9" cy="14" r="1"></circle>
+                    <circle cx="15" cy="14" r="1"></circle>
+                  </svg>
                 </div>
                 <div class="message-content">
-                  <p>Welcome! I'm your grounded survey co-pilot. I have full context of your uploaded literature, generated outline, and review audit. Ask me anything about synthesizing papers, building taxonomy tables, or structuring your survey arguments.</p>
+                  <p>Welcome! I'm your grounded survey co-pilot. I have full context of your uploaded literature,
+                    generated outline, and review audit. Ask me anything about synthesizing papers, building taxonomy
+                    tables, or structuring your survey arguments.</p>
                 </div>
               </div>
             </div>
 
             <!-- Chat Input Form -->
             <form id="chatForm" class="chat-input-row">
-              <input type="text" id="chatInput" placeholder="Ask a question about your papers, taxonomy, or draft..." autocomplete="off">
+              <input type="text" id="chatInput" placeholder="Ask a question about your papers, taxonomy, or draft..."
+                autocomplete="off">
               <button type="submit" id="btnSendChat" class="btn btn-primary">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
               </button>
             </form>
           </div>
@@ -606,11 +841,13 @@
         </div>
         <div class="form-group">
           <label for="inputProjectTopic">Survey Topic & Scope</label>
-          <input type="text" id="inputProjectTopic" placeholder="e.g. Modern RAG architectures for multi-document synthesis">
+          <input type="text" id="inputProjectTopic"
+            placeholder="e.g. Modern RAG architectures for multi-document synthesis">
         </div>
         <div class="form-group">
           <label for="inputProjectDesc">Research Goals / Target Venue (Optional)</label>
-          <textarea id="inputProjectDesc" rows="3" placeholder="Notes on scope, course requirements (e.g. CS801), or target journal/conference"></textarea>
+          <textarea id="inputProjectDesc" rows="3"
+            placeholder="Notes on scope, course requirements (e.g. CS801), or target journal/conference"></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
@@ -659,7 +896,8 @@
       <form id="formRegenOutline">
         <div class="form-group">
           <label for="inputOutlineGuidance">Guidance Prompt / Special Focus</label>
-          <textarea id="inputOutlineGuidance" rows="3" placeholder="e.g., 'Make it more comparison-heavy', 'Focus heavily on low-resource edge deployment', or 'Structure taxonomy by retrieval paradigm'"></textarea>
+          <textarea id="inputOutlineGuidance" rows="3"
+            placeholder="e.g., 'Make it more comparison-heavy', 'Focus heavily on low-resource edge deployment', or 'Structure taxonomy by retrieval paradigm'"></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
@@ -716,7 +954,8 @@
         <div class="form-divider"><span>OR PASTE TEXT DIRECTLY</span></div>
         <div class="form-group">
           <label for="inputDraftText">Paste Draft Content</label>
-          <textarea id="inputDraftText" rows="10" placeholder="Paste your introductory sections, taxonomy, or draft paragraphs here..."></textarea>
+          <textarea id="inputDraftText" rows="10"
+            placeholder="Paste your introductory sections, taxonomy, or draft paragraphs here..."></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
@@ -743,7 +982,7 @@
             <option value="ollama">Local Ollama (localhost:11434)</option>
           </select>
         </div>
-        
+
         <div id="groupOpenRouter" class="settings-provider-group">
           <div class="form-group">
             <label for="settingOpenRouterKey">OpenRouter API Key</label>
@@ -796,15 +1035,18 @@
   <!-- Floating AI Research Co-Pilot Trigger & Apple Translucent Half-Screen Sheet -->
   <div id="floatingChatWrapper" class="floating-chat-wrapper">
     <!-- Floating Trigger Icon Button -->
-    <button id="btnFloatingChatTrigger" class="floating-chat-trigger" title="Open AI Research Co-Pilot (Live Chat & Citation Assistant)">
+    <button id="btnFloatingChatTrigger" class="floating-chat-trigger"
+      title="Open AI Research Co-Pilot (Live Chat & Citation Assistant)">
       <div class="floating-chat-icon-inner">
-        <svg class="icon-chat-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="icon-chat-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
           <circle cx="12" cy="10" r="1" fill="currentColor"></circle>
           <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
         </svg>
-        <svg class="icon-chat-close hidden" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="icon-chat-close hidden" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
@@ -823,9 +1065,9 @@
           </div>
         </div>
         <div class="floating-chat-header-actions">
-          <span class="badge badge-active" style="font-size: 10px;">Grounded</span>
           <button id="btnCloseFloatingChat" class="floating-chat-close-btn" title="Close chat window">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -834,24 +1076,32 @@
       </div>
 
       <div class="floating-chat-quick-chips">
-        <button type="button" class="docked-chip" data-prompt="Synthesize the primary methodology comparison for my current section.">Synthesize methods</button>
-        <button type="button" class="docked-chip" data-prompt="Find literature citations to support a claim on retrieval accuracy.">Find citations</button>
-        <button type="button" class="docked-chip" data-prompt="Suggest a transition between background and technical taxonomy.">Transition help</button>
-        <button type="button" class="docked-chip" data-prompt="Format an IEEE style comparison table for these algorithms.">Table snippet</button>
+        <button type="button" class="docked-chip"
+          data-prompt="Synthesize the primary methodology comparison for my current section.">Synthesize
+          methods</button>
+        <button type="button" class="docked-chip"
+          data-prompt="Find literature citations to support a claim on retrieval accuracy.">Find citations</button>
+        <button type="button" class="docked-chip"
+          data-prompt="Suggest a transition between background and technical taxonomy.">Transition help</button>
+        <button type="button" class="docked-chip"
+          data-prompt="Format an IEEE style comparison table for these algorithms.">Table snippet</button>
       </div>
 
       <div id="dockedChatMessages" class="floating-chat-messages">
         <div class="chat-message assistant-message">
           <div class="message-avatar">✦</div>
           <div class="message-content">
-            <p>Welcome! I'm your research co-pilot. I have full context of your uploaded papers, generated taxonomy outline, and drafts.</p>
-            <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Ask me for literature citations, taxonomy comparisons, or LaTeX math equations anytime.</p>
+            <p>Welcome! I'm your research co-pilot. I have full context of your uploaded papers, generated taxonomy
+              outline, and drafts.</p>
+            <p style="margin-top:6px; font-size:12px; color:var(--text-muted);">Ask me for literature citations,
+              taxonomy comparisons, or LaTeX math equations anytime.</p>
           </div>
         </div>
       </div>
 
       <form id="dockedChatForm" class="floating-chat-form">
-        <input type="text" id="dockedChatInput" placeholder="Ask AI co-pilot for citations, synthesis, or LaTeX..." autocomplete="off" />
+        <input type="text" id="dockedChatInput" placeholder="Ask AI co-pilot for citations, synthesis, or LaTeX..."
+          autocomplete="off" />
         <button type="submit" id="btnSendDockedChat" class="btn btn-primary btn-sm">Send</button>
       </form>
     </aside>
@@ -859,4 +1109,5 @@
 
   <script type="module" src="/static/js/main.js"></script>
 </body>
+
 </html>
